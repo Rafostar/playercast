@@ -1,11 +1,21 @@
 #!/usr/bin/env node
 
 const player = require('./player');
-const args = process.argv.slice(2);
+const service = require('./service');
+const parseArgs = require('minimist');
 
-if(args.length !== 1) return showHelp();
+var opts = {
+	boolean: ['create-service', 'remove-service'],
+	unknown: (option) => onUnknown(option)
+};
 
-var data = args[0].split(':');
+var args = process.argv.slice(2);
+var argv = parseArgs(args, opts);
+
+if(argv['remove-service']) return service.remove();
+else if(argv._.length !== 1) return showHelp();
+
+var data = String(argv._[0]).split(':');
 if(data.length > 2) return showHelp();
 
 const server = {
@@ -21,7 +31,18 @@ var opts = {
 	ipcPath: '/tmp/cast-socket'
 };
 
-player.init(opts);
+if(argv['create-service']) service.create(server);
+else if(argv['remove-service']) service.remove();
+else player.init(opts);
+
+function onUnknown(option)
+{
+	if(option.includes('-'))
+	{
+		showHelp();
+		process.exit();
+	}
+}
 
 function showHelp()
 {
@@ -31,10 +52,14 @@ function showHelp()
 		``,
 		`Playercast ${pkg.version}, media receiver for GNOME Shell Extension Cast to TV`,
 		``,
-		`Usage: playercast <ip>[:port]`,
+		`Usage: playercast <ip>[:port] [OPTIONS]`,
 		``,
-		`  ip   - address of device with Cast to TV extension`,
+		`  ip   - address or hostname of device with Cast to TV extension`,
 		`  port - listening port configured in extension (default: 4000)`,
+		``,
+		`OPTIONS:`,
+		`  --create-service      Creates systemd service file with currently used params`,
+		`  --remove-service      Removes playercast systemd service file`,
 		``
 	].join('\n'));
 }

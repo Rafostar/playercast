@@ -7,9 +7,7 @@
 
 Turn your media player into receiver for GNOME Shell Extension Cast to TV
 
-A simple app meant to be run in background. Automates the process of streaming files over the local network.
-
-Install it on device with any Linux DE and turn it into your own cast receiver that plays files casted from your host PC on your network with [Cast to TV](https://github.com/Rafostar/gnome-shell-extension-cast-to-tv) installed.
+A simple app meant to be run in background. Automates the process of streaming files over the local network. Install it on device with any Linux DE to turn it into your own cast receiver that plays files casted from your host PC with [Cast to TV](https://github.com/Rafostar/gnome-shell-extension-cast-to-tv) installed.
 
 To receive media set `Playercast app` as your receiver type in Cast to TV settings.
 
@@ -29,7 +27,36 @@ Requires one of the supported media players to work.<br>
 Currently only MPV player is supported. VLC support is planned for the future.
 
 ## Usage
-The application is intended for use from terminal with `playercast IP:PORT` command, where IP is the address of server PC to connect to and PORT is the listening port number set in Cast to TV extension settings (default: 4000).
+The application can be used from terminal with:
+```
+playercast IP:PORT
+```
+IP is the address of server PC with Cast to TV extension.<br>
+PORT is the listening port set in Cast to TV extension settings (default: 4000).
+
+### Install as systemd service
+After testing in command line, app can be installed as systemd service with:
+```
+playercast IP:PORT --create-service
+```
+Above command can be always run again to update service configuration with new IP/PORT.
+
+Remember to enable and start newly added service with:
+```
+systemctl --user enable playercast
+systemctl --user start playercast
+```
+App will be running on each system boot as background service idling and waiting to receive casted files.
+
+It is recommended to assign your server PC a static IP address, otherwise app will not be able to connect when IP changes.
+
+### Uninstall service
+If you want to completely remove systemd service run:
+```
+systemctl --user disable playercast
+systemctl --user stop playercast
+playercast --remove-service
+```
 
 ## Donation
 If you like my work please support it by buying me a cup of coffee :grin:
