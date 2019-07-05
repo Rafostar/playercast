@@ -1,6 +1,6 @@
 {
   "name": "playercast",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Turn your media player into receiver for GNOME Shell Extension Cast to TV",
   "main": "index.js",
   "bin": {
