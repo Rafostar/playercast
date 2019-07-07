@@ -5,7 +5,8 @@ const player = require('./player');
 const service = require('./service');
 
 const opts = {
-	boolean: ['create-service', 'remove-service'],
+	boolean: ['quiet', 'create-service', 'remove-service'],
+	alias: { q: 'quiet' },
 	unknown: (option) => onUnknown(option)
 };
 
@@ -60,6 +61,7 @@ function showHelp()
 		`  port - listening port configured in extension (default: 4000)`,
 		``,
 		`OPTIONS:`,
+		`  -q, --quiet           Do not print player status info except errors`,
 		`  --create-service      Creates systemd service file with currently used params`,
 		`  --remove-service      Removes playercast systemd service file`,
 		``

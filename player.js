@@ -201,6 +201,8 @@ function onPlayerLaunch()
 
 function writeLine(text)
 {
+	if(opts.quiet) return;
+
 	process.stdout.cursorTo(0);
 	process.stdout.clearLine(0);
 	process.stdout.write(text);
@@ -208,7 +210,8 @@ function writeLine(text)
 
 function writeError(text)
 {
-	console.error('\n' + text);
+	if(opts.quiet) console.error(text);
+	else console.error('\n' + text);
 }
 
 module.exports = player;
