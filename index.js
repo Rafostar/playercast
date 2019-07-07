@@ -1,21 +1,21 @@
 #!/usr/bin/env node
 
+const parseArgs = require('minimist');
 const player = require('./player');
 const service = require('./service');
-const parseArgs = require('minimist');
 
-var opts = {
+const opts = {
 	boolean: ['create-service', 'remove-service'],
 	unknown: (option) => onUnknown(option)
 };
 
-var args = process.argv.slice(2);
-var argv = parseArgs(args, opts);
+const args = process.argv.slice(2);
+const argv = parseArgs(args, opts);
 
 if(argv['remove-service']) return service.remove();
 else if(argv._.length !== 1) return showHelp();
 
-var data = String(argv._[0]).split(':');
+const data = String(argv._[0]).split(':');
 if(data.length > 2) return showHelp();
 
 const server = {
@@ -24,16 +24,18 @@ const server = {
 };
 
 const link = `http://${server.ip}:${server.port}`;
-var opts = {
+const playerOpts = {
 	media: `${link}/cast`,
 	websocket: link,
 	player: 'mpv',
 	ipcPath: '/tmp/cast-socket'
 };
 
+const config = { ...playerOpts, ...argv };
+
 if(argv['create-service']) service.create(server);
 else if(argv['remove-service']) service.remove();
-else player.init(opts);
+else player.listen(config);
 
 function onUnknown(option)
 {

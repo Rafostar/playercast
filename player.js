@@ -1,11 +1,10 @@
 const PlayerController = require('media-player-controller');
 const ioClient = require('socket.io-client');
-const readline = require('readline');
 
 var websocket;
 var controller;
-var mediaLink;
-var updateInterval = null;
+var opts;
+var updateInterval;
 
 var status = {
 	playerState: 'PAUSED',
@@ -16,9 +15,9 @@ var status = {
 
 var player =
 {
-	init: (opts) =>
+	listen: (config) =>
 	{
-		mediaLink = opts.media;
+		opts = config;
 		controller = new PlayerController(opts);
 
 		websocket = ioClient(opts.websocket);
@@ -26,112 +25,110 @@ var player =
 
 		websocket.on('connect', () => writeLine('Waiting for media cast...'));
 		websocket.on('disconnect', () => writeLine('WebSocket disconnected'));
-		websocket.on('remote-signal', (msg) => player.control(msg));
+		websocket.on('remote-signal', (msg) => remoteControl(msg));
 		websocket.on('playercast', () => onPlayerCast());
-	},
+	}
+}
 
-	control: (msg) =>
+function remoteControl(msg)
+{
+	if(!controller) return;
+
+	var position;
+
+	switch(msg.action)
 	{
-		if(!controller) return;
-
-		var position;
-
-		switch(msg.action)
-		{
-			case 'PLAY':
-				controller.player.play((err) =>
-				{
-					if(err) return;
-					status.playerState = 'PLAYING';
-					websocket.emit('status-update', status);
-				});
-				break;
-			case 'PAUSE':
-				controller.player.pause((err) =>
-				{
-					if(err) return;
-					status.playerState = 'PAUSED';
-					websocket.emit('status-update', status);
-				});
-				break;
-			case 'SEEK':
-				position = msg.value * status.media.duration;
-				controller.player.seek(position, (err) =>
-				{
-					if(err) return;
-					status.currentTime = position;
-					websocket.emit('status-update', status);
-				});
-				break;
-			case 'SEEK+':
-				position = status.currentTime + msg.value;
-				if(position < status.media.duration)
-				{
-					controller.player.seek(position, (err) =>
-					{
-						if(err) return;
-						status.currentTime = position;
-						websocket.emit('status-update', status);
-					});
-				}
-				break;
-			case 'SEEK-':
-				position = status.currentTime - msg.value;
-				if(position < 0) position = 0;
-				controller.player.seek(position, (err) =>
-				{
-					if(err) return;
-					status.currentTime = position;
-					websocket.emit('status-update', status);
-				});
-				break;
-			case 'VOLUME':
-				controller.player.setVolume(msg.value * 100, (err) =>
-				{
-					if(err) return;
-					status.volume = msg.value;
-					websocket.emit('status-update', status);
-				});
-				break;
-			case 'STOP':
-				controller.quit();
-				break;
-			default:
-				break;
-		}
-
-		return status;
-	},
-
-	updateStatus: (data) =>
-	{
-		const msgArray = data.split('\n');
-
-		for(var i = 0; i < msgArray.length - 1; i++)
-		{
-			var msg = JSON.parse(msgArray[i]);
-			if(msg.event === 'property-change')
+		case 'PLAY':
+			controller.player.play((err) =>
 			{
-				switch(msg.name)
+				if(err) return;
+				status.playerState = 'PLAYING';
+				websocket.emit('status-update', status);
+			});
+			break;
+		case 'PAUSE':
+			controller.player.pause((err) =>
+			{
+				if(err) return;
+				status.playerState = 'PAUSED';
+				websocket.emit('status-update', status);
+			});
+			break;
+		case 'SEEK':
+			position = msg.value * status.media.duration;
+			controller.player.seek(position, (err) =>
+			{
+				if(err) return;
+				status.currentTime = position;
+				websocket.emit('status-update', status);
+			});
+			break;
+		case 'SEEK+':
+			position = status.currentTime + msg.value;
+			if(position < status.media.duration)
+			{
+				controller.player.seek(position, (err) =>
 				{
-					case 'volume':
-						var volume = msg.data / 100;
-						if(volume > 1) volume = 1;
-						status.volume = volume;
-						break;
-					case 'time-pos':
-						status.currentTime = msg.data;
-						break;
-					case 'duration':
-						status.media.duration = msg.data;
-						break;
-					case 'pause':
-						status.playerState = (msg.data === true) ? 'PAUSED' : 'PLAYING';
-						break;
-					default:
-						writeError(`Unhandled property: ${msg}`);
-						break;
-				}
+					if(err) return;
+					status.currentTime = position;
+					websocket.emit('status-update', status);
+				});
+			}
+			break;
+		case 'SEEK-':
+			position = status.currentTime - msg.value;
+			if(position < 0) position = 0;
+			controller.player.seek(position, (err) =>
+			{
+				if(err) return;
+				status.currentTime = position;
+				websocket.emit('status-update', status);
+			});
+			break;
+		case 'VOLUME':
+			controller.player.setVolume(msg.value * 100, (err) =>
+			{
+				if(err) return;
+				status.volume = msg.value;
+				websocket.emit('status-update', status);
+			});
+			break;
+		case 'STOP':
+			controller.quit();
+			break;
+		default:
+			break;
+	}
+}
+
+function updateStatus(data)
+{
+	const msgArray = data.split('\n');
+
+	for(var i = 0; i < msgArray.length - 1; i++)
+	{
+		var msg = JSON.parse(msgArray[i]);
+		if(msg.event === 'property-change')
+		{
+			switch(msg.name)
+			{
+				case 'volume':
+					var volume = msg.data / 100;
+					if(volume > 1) volume = 1;
+					status.volume = volume;
+					break;
+				case 'time-pos':
+					status.currentTime = msg.data;
+					break;
+				case 'duration':
+					status.media.duration = msg.data;
+					break;
+				case 'pause':
+					status.playerState = (msg.data === true) ? 'PAUSED' : 'PLAYING';
+					break;
+				default:
+					writeError(`Unhandled property: ${msg}`);
+					break;
 			}
 		}
 	}
@@ -152,7 +149,7 @@ function onPlayerCast()
 
 	if(controller.process && controller.player)
 	{
-		controller.player.load(mediaLink, (err) =>
+		controller.player.load(opts.media, (err) =>
 		{
 			if(!err) return websocket.emit('show-remote', true);
 
@@ -178,7 +175,7 @@ function onPlayerLaunch()
 	controller.process.stdout.once('data', () =>
 	{
 		if(controller.player.socket)
-			controller.player.socket.on('data', (data) => player.updateStatus(data));
+			controller.player.socket.on('data', (data) => updateStatus(data));
 
 		writeLine('Player started');
 		websocket.emit('show-remote', true);
@@ -204,8 +201,8 @@ function onPlayerLaunch()
 
 function writeLine(text)
 {
-	readline.cursorTo(process.stdout, 0);
-	readline.clearLine(process.stdout, 0);
+	process.stdout.cursorTo(0);
+	process.stdout.clearLine(0);
 	process.stdout.write(text);
 }
 
