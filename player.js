@@ -73,7 +73,7 @@ function onPlayerCast(msg)
 
 function onPlayerConnect()
 {
-	writeLine('Waiting for media cast...');
+	writeLine(`${opts.name} waiting for media cast...`);
 	if(opts.name) websocket.emit('playercast-connect', opts.name);
 }
 
@@ -108,7 +108,7 @@ function onPlayerLaunch()
 
 		if(code) writeError(`Player exited with status code: ${code}`);
 
-		writeLine('Waiting for media cast...');
+		writeLine(`${opts.name} waiting for media cast...`);
 	});
 
 	controller.process.once('error', (err) => writeError(err.message));

@@ -4,7 +4,7 @@ const servicePath = `${systemdPath}/playercast.service`;
 
 module.exports =
 {
-	create: (server) =>
+	create: (server, config) =>
 	{
 		if(!fs.existsSync(systemdPath))
 		{
@@ -21,7 +21,7 @@ module.exports =
 			`[Service]`,
 			`Type=simple`,
 			`Environment=DISPLAY=:0`,
-			`ExecStart=${process.argv[1]} -q ${server.ip}:${server.port}`,
+			`ExecStart=${process.argv[1]} -q -n ${config.name} ${server.ip}:${server.port}`,
 			`Restart=always`,
 			``,
 			`[Install]`,
