@@ -26,7 +26,7 @@
   "bugs": {
     "url": "https://github.com/Rafostar/playercast/issues"
   },
-  "homepage": "https://github.com/Rafostar/playercast#readme",
+  "homepage": "https://rafostar.github.io/playercast",
   "dependencies": {
     "media-player-controller": "0.0.1",
     "minimist": "^1.2.0",
