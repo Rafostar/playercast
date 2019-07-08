@@ -5,6 +5,7 @@ var websocket;
 var controller;
 var opts;
 var updateInterval;
+var isControlled = false;
 
 var status = {
 	playerState: 'PAUSED',
@@ -23,16 +24,99 @@ var player =
 		websocket = ioClient(opts.websocket);
 		writeLine(`Connecting to ${opts.websocket}...`);
 
-		websocket.on('connect', () => writeLine('Waiting for media cast...'));
-		websocket.on('disconnect', () => writeLine('WebSocket disconnected'));
-		websocket.on('remote-signal', (msg) => remoteControl(msg));
-		websocket.on('playercast', () => onPlayerCast());
+		websocket.on('connect', () => onPlayerConnect());
+		websocket.on('disconnect', () => onPlayerDisconnect());
+		websocket.on('remote-signal', (msg) => onRemoteSignal(msg));
+		websocket.on('playercast', (msg) => onPlayerCast(msg));
 	}
 }
 
-function remoteControl(msg)
+function onPlayerCast(msg)
 {
-	if(!controller) return;
+	if(opts.name === msg)
+		isControlled = true;
+	else
+		return isControlled = false;
+
+	if(!controller)
+		return writeError('Controller not initialized!');
+
+	var launchPlayer = () =>
+	{
+		controller.launch((err) =>
+		{
+			if(err) return writeError(err.message);
+			onPlayerLaunch();
+		});
+	}
+
+	if(controller.process && controller.player)
+	{
+		controller.player.load(opts.media, (err) =>
+		{
+			if(!err) return websocket.emit('show-remote', true);
+
+			controller.process.once('close', () => launchPlayer());
+
+			controller.quit((err) =>
+			{
+				if(err) writeError(err.message);
+			});
+		});
+	}
+	else
+	{
+		writeLine(`Starting media player...`);
+		launchPlayer();
+	}
+}
+
+function onPlayerConnect()
+{
+	writeLine('Waiting for media cast...');
+	if(opts.name) websocket.emit('playercast-connect', opts.name);
+}
+
+function onPlayerDisconnect()
+{
+	isControlled = false;
+	writeLine('WebSocket disconnected');
+}
+
+function onPlayerLaunch()
+{
+	updateInterval = setInterval(() => websocket.emit('status-update', status), 500);
+
+	controller.process.stdout.once('data', () =>
+	{
+		if(controller.player.socket)
+			controller.player.socket.on('data', (data) => updateStatus(data));
+
+		writeLine('Player started');
+		websocket.emit('show-remote', true);
+	});
+
+	controller.process.once('close', (code) =>
+	{
+		websocket.emit('show-remote', false);
+
+		if(updateInterval)
+		{
+			clearInterval(updateInterval);
+			updateInterval = null;
+		}
+
+		if(code) writeError(`Player exited with status code: ${code}`);
+
+		writeLine('Waiting for media cast...');
+	});
+
+	controller.process.once('error', (err) => writeError(err.message));
+}
+
+function onRemoteSignal(msg)
+{
+	if(!controller || !isControlled) return;
 
 	var position;
 
@@ -132,71 +216,6 @@ function updateStatus(data)
 			}
 		}
 	}
-}
-
-function onPlayerCast()
-{
-	if(!controller) return writeError('Controller not initialized!');
-
-	var launchPlayer = () =>
-	{
-		controller.launch((err) =>
-		{
-			if(err) return writeError(err.message);
-			onPlayerLaunch();
-		});
-	}
-
-	if(controller.process && controller.player)
-	{
-		controller.player.load(opts.media, (err) =>
-		{
-			if(!err) return websocket.emit('show-remote', true);
-
-			controller.process.once('close', () => launchPlayer());
-
-			controller.quit((err) =>
-			{
-				if(err) writeError(err.message);
-			});
-		});
-	}
-	else
-	{
-		writeLine(`Starting media player...`);
-		launchPlayer();
-	}
-}
-
-function onPlayerLaunch()
-{
-	updateInterval = setInterval(() => websocket.emit('status-update', status), 500);
-
-	controller.process.stdout.once('data', () =>
-	{
-		if(controller.player.socket)
-			controller.player.socket.on('data', (data) => updateStatus(data));
-
-		writeLine('Player started');
-		websocket.emit('show-remote', true);
-	});
-
-	controller.process.once('close', (code) =>
-	{
-		websocket.emit('show-remote', false);
-
-		if(updateInterval)
-		{
-			clearInterval(updateInterval);
-			updateInterval = null;
-		}
-
-		if(code) writeError(`Player exited with status code: ${code}`);
-
-		writeLine('Waiting for media cast...');
-	});
-
-	controller.process.once('error', (err) => writeError(err.message));
 }
 
 function writeLine(text)

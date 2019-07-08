@@ -6,7 +6,8 @@ const service = require('./service');
 
 const opts = {
 	boolean: ['quiet', 'create-service', 'remove-service'],
-	alias: { q: 'quiet' },
+	string: ['name'],
+	alias: { q: 'quiet', n: 'name' },
 	unknown: (option) => onUnknown(option)
 };
 
@@ -32,7 +33,7 @@ const playerOpts = {
 	ipcPath: '/tmp/cast-socket'
 };
 
-const config = { ...playerOpts, ...argv };
+var config = { ...playerOpts, ...argv };
 
 if(argv['create-service']) service.create(server);
 else if(argv['remove-service']) service.remove();
