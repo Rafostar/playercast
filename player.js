@@ -34,7 +34,7 @@ var player =
 
 function onPlayerCast(msg)
 {
-	if(opts.name === msg)
+	if(opts.name === msg.name)
 		isControlled = true;
 	else
 		return isControlled = false;
