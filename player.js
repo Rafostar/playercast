@@ -28,6 +28,7 @@ var player =
 		websocket.on('disconnect', () => onPlayerDisconnect());
 		websocket.on('remote-signal', (msg) => onRemoteSignal(msg));
 		websocket.on('playercast', (msg) => onPlayerCast(msg));
+		websocket.on('invalid', (msg) => onPlayerInvalid(msg));
 	}
 }
 
@@ -73,7 +74,7 @@ function onPlayerCast(msg)
 
 function onPlayerConnect()
 {
-	writeLine(`${opts.name} waiting for media cast...`);
+	writeLine(`Connected to ${opts.websocket}`);
 	if(opts.name) websocket.emit('playercast-connect', opts.name);
 }
 
@@ -179,6 +180,22 @@ function onRemoteSignal(msg)
 			break;
 		case 'STOP':
 			controller.quit();
+			break;
+		default:
+			break;
+	}
+}
+
+function onPlayerInvalid(msg)
+{
+	switch(msg)
+	{
+		case 'name':
+			writeError(`Playercast name "${opts.name}" is already used on another device!`);
+			process.exit(1);
+			break;
+		case false:
+			writeLine(`${opts.name} waiting for media cast...`);
 			break;
 		default:
 			break;
