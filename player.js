@@ -44,6 +44,8 @@ function onPlayerCast(msg)
 
 	var launchPlayer = () =>
 	{
+		controller.opts.playerArgs = getPlayerArgs(msg);
+
 		controller.launch((err) =>
 		{
 			if(err) return writeError(err.message);
@@ -53,6 +55,8 @@ function onPlayerCast(msg)
 
 	if(controller.process && controller.player)
 	{
+		setPlayerProperties(msg);
+
 		controller.player.load(opts.media, (err) =>
 		{
 			if(!err) return websocket.emit('show-remote', true);
@@ -232,6 +236,52 @@ function updateStatus(data)
 					break;
 			}
 		}
+	}
+}
+
+function getPlayerArgs(selection)
+{
+	var args = [''];
+
+	switch(opts.player)
+	{
+		case 'mpv':
+			const mpvUniversal = ['--no-ytdl', '--fullscreen', '--image-display-duration=inf'];
+			const mpvVideo = ['--loop=no', '--osc=yes'];
+			const mpvPicture = ['--loop=inf', '--osc=no'];
+
+			if(selection.streamType === 'PICTURE')
+				args = [ ...mpvUniversal, ...mpvPicture];
+			else
+				args = [ ...mpvUniversal, ...mpvVideo];
+			break;
+		default:
+			writeError(`Cannot get args for unsupported media player: ${opts.player}`);
+			break;
+	}
+
+	return args;
+}
+
+function setPlayerProperties(selection)
+{
+	switch(opts.player)
+	{
+		case 'mpv':
+			if(selection.streamType === 'PICTURE')
+			{
+				controller.player.setRepeat(true);
+				controller.player.command(['set_property', 'osc', 'no']);
+			}
+			else
+			{
+				controller.player.setRepeat(false);
+				controller.player.command(['set_property', 'osc', 'yes']);
+			}
+			break;
+		default:
+			writeError(`Cannot set properties of unsupported media player: ${opts.player}`);
+			break;
 	}
 }
 
