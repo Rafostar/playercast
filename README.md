@@ -1,5 +1,6 @@
 # Playercast
 [![License](https://img.shields.io/github/license/Rafostar/playercast.svg)](https://github.com/Rafostar/playercast/blob/master/LICENSE)
+[![npm](https://img.shields.io/npm/v/playercast.svg)](https://www.npmjs.com/package/playercast)
 [![Downloads](https://img.shields.io/npm/dt/playercast.svg)](https://www.npmjs.com/package/playercast)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=TFVDFD88KQ322)
 [![Donate](https://img.shields.io/badge/Donate-PayPal.Me-lightgrey.svg)](https://www.paypal.me/Rafostar)
