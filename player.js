@@ -59,7 +59,11 @@ function onPlayerCast(msg)
 
 		controller.player.load(opts.media, (err) =>
 		{
-			if(!err) return websocket.emit('show-remote', true);
+			if(!err)
+			{
+				controller.player.play();
+				return websocket.emit('show-remote', true);
+			}
 
 			controller.process.once('close', () => launchPlayer());
 
