@@ -1,9 +1,12 @@
 const PlayerController = require('media-player-controller');
 const ioClient = require('socket.io-client');
+const cecClient = require('./cec');
 
 var websocket;
 var controller;
+var cec;
 var opts;
+
 var updateInterval;
 var isControlled = false;
 
@@ -20,6 +23,8 @@ var player =
 	{
 		opts = config;
 		controller = new PlayerController(opts);
+
+		cec = cecClient();
 
 		websocket = ioClient(opts.websocket);
 		writeLine(`Connecting to ${opts.websocket}...`);
@@ -44,6 +49,8 @@ function onPlayerCast(msg)
 
 	var launchPlayer = () =>
 	{
+		if(cec) cec.tv.turnOn();
+
 		controller.opts.playerArgs = getPlayerArgs(msg);
 
 		controller.launch((err) =>
@@ -101,6 +108,8 @@ function onPlayerLaunch()
 		if(controller.player.socket)
 			controller.player.socket.on('data', (data) => updateStatus(data));
 
+		if(cec) cec.setActive();
+
 		writeLine('Player started');
 		websocket.emit('show-remote', true);
 	});
@@ -108,6 +117,7 @@ function onPlayerLaunch()
 	controller.process.once('close', (code) =>
 	{
 		websocket.emit('show-remote', false);
+		if(cec) cec.setInactive();
 
 		if(updateInterval)
 		{
