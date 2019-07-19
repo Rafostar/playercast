@@ -24,6 +24,7 @@ var player =
 		opts = config;
 		controller = new PlayerController(opts);
 
+		writeLine('Checking HDMI CEC support...');
 		cec = cecClient();
 
 		websocket = ioClient(opts.websocket);
@@ -47,12 +48,29 @@ function onPlayerCast(msg)
 	if(!controller)
 		return writeError('Controller not initialized!');
 
-	var launchPlayer = () =>
+	var launchPlayer = async(isRestart) =>
 	{
-		if(cec) cec.tv.turnOn();
+		if(cec && !isRestart)
+		{
+			writeLine('Sending HDMI CEC signals...');
+
+			var tvStatus = await cec.tv.getStatus();
+			if(tvStatus === 'standby')
+			{
+				await cec.tv.turnOn();
+
+				while(tvStatus !== 'on')
+				{
+					tvStatus = await cec.tv.getStatus();
+				}
+			}
+
+			cec.setActive();
+		}
 
 		controller.opts.playerArgs = getPlayerArgs(msg);
 
+		writeLine(`Starting ${opts.player}...`);
 		controller.launch((err) =>
 		{
 			if(err) return writeError(err.message);
@@ -72,7 +90,7 @@ function onPlayerCast(msg)
 				return websocket.emit('show-remote', true);
 			}
 
-			controller.process.once('close', () => launchPlayer());
+			controller.process.once('close', () => launchPlayer(true));
 
 			controller.quit((err) =>
 			{
@@ -82,8 +100,7 @@ function onPlayerCast(msg)
 	}
 	else
 	{
-		writeLine(`Starting media player...`);
-		launchPlayer();
+		launchPlayer(false);
 	}
 }
 
@@ -108,8 +125,6 @@ function onPlayerLaunch()
 		if(controller.player.socket)
 			controller.player.socket.on('data', (data) => updateStatus(data));
 
-		if(cec) cec.setActive();
-
 		writeLine('Player started');
 		websocket.emit('show-remote', true);
 	});
@@ -117,7 +132,6 @@ function onPlayerLaunch()
 	controller.process.once('close', (code) =>
 	{
 		websocket.emit('show-remote', false);
-		if(cec) cec.setInactive();
 
 		if(updateInterval)
 		{
