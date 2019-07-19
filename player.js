@@ -24,8 +24,11 @@ var player =
 		opts = config;
 		controller = new PlayerController(opts);
 
-		writeLine('Checking HDMI CEC support...');
-		cec = cecClient();
+		if(!config['disable-cec'])
+		{
+			writeLine('Checking HDMI CEC support...');
+			cec = cecClient();
+		}
 
 		websocket = ioClient(opts.websocket);
 		writeLine(`Connecting to ${opts.websocket}...`);
@@ -132,6 +135,7 @@ function onPlayerLaunch()
 	controller.process.once('close', (code) =>
 	{
 		websocket.emit('show-remote', false);
+		if(cec) cec.setInactive();
 
 		if(updateInterval)
 		{
