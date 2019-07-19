@@ -12,6 +12,23 @@ module.exports =
 			fs.mkdirSync(systemdPath);
 		}
 
+		var execString = `${process.argv[1]} ${server.ip}:${server.port} -q -n '${config.name}'`;
+
+		const configFilter = (option) =>
+		{
+			if(	option !== 'quiet'
+				&& option !== 'create-service'
+				&& option !== 'remove-service'
+				&& option.length > 1
+				&& config[option] === true
+			) {
+				return option;
+			}
+		}
+
+		const options = Object.keys(config).filter(configFilter);
+		options.forEach(option => execString += ` --${option}`);
+
 		const contents = [
 			`[Unit]`,
 			`Description=Playercast Service`,
@@ -21,7 +38,7 @@ module.exports =
 			`[Service]`,
 			`Type=simple`,
 			`Environment=DISPLAY=:0`,
-			`ExecStart=${process.argv[1]} -q -n '${config.name}' ${server.ip}:${server.port}`,
+			`ExecStart=${execString}`,
 			`Restart=always`,
 			``,
 			`[Install]`,
