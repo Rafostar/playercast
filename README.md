@@ -14,9 +14,10 @@ To receive media set `Playercast app` as your receiver type in Cast to TV settin
 
 ## Features
 * Receives casted media from [Cast to TV](https://rafostar.github.io/gnome-shell-extension-cast-to-tv)
-* Can be installed on any Linux distro with any DE
 * Automatically starts media player upon cast
+* Can be installed on any Linux distro with any DE
 * Remotely control playback from GNOME top bar
+* Supports HDMI CEC (turns on TV and changes video source)
 
 ## Installation
 ```
@@ -64,6 +65,14 @@ systemctl --user disable playercast
 systemctl --user stop playercast
 playercast --remove-service
 ```
+
+### HDMI CEC
+Requires CEC capable device (e.g. Raspberry Pi) and TV with such functionality.<br>
+Additionally `cec-client` must be installed. On *Raspbian* it is included in `cec-utils` package.
+```
+sudo apt install cec-utils
+```
+CEC functionality is automatically detected and enabled on app launch. It can be disabled with `--disable-cec` option.
 
 ## Donation
 If you like my work please support it by buying me a cup of coffee :-)
