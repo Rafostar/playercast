@@ -278,7 +278,8 @@ function getPlayerArgs(selection)
 	switch(opts.player)
 	{
 		case 'mpv':
-			const mpvUniversal = ['--no-ytdl', '--fullscreen', `--sub-file=${opts.subtitles}`, '--image-display-duration=inf'];
+			const mpvUniversal = ['--no-ytdl', '--fullscreen',
+				`--sub-file=${opts.subtitles}`, '--image-display-duration=inf'];
 			const mpvVideo = ['--loop=no', '--osc=yes'];
 			const mpvPicture = ['--loop=inf', '--osc=no'];
 
