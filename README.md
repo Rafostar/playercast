@@ -66,13 +66,14 @@ systemctl --user stop playercast
 playercast --remove-service
 ```
 
-### HDMI CEC
+## HDMI CEC
 Requires CEC capable device (e.g. Raspberry Pi) and TV with such functionality.<br>
 Additionally `cec-client` must be installed. On *Raspbian* it is included in `cec-utils` package.
 ```
 sudo apt install cec-utils
 ```
-CEC functionality is automatically detected and enabled on app launch. It can be disabled with `--disable-cec` option.
+CEC functionality is automatically detected and enabled on app launch.<br>
+It can be disabled with `--disable-cec` option.
 
 ## Donation
 If you like my work please support it by buying me a cup of coffee :-)
