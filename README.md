@@ -6,7 +6,7 @@
 [![Donate](https://img.shields.io/badge/Donate-PayPal.Me-lightgrey.svg)](https://www.paypal.me/Rafostar)
 [![Twitter](https://img.shields.io/twitter/url/https/github.com/Rafostar/playercast.svg?style=social)](https://twitter.com/intent/tweet?text=Wow:&url=https%3A%2F%2Fgithub.com%2FRafostar%2Fplayercast)
 
-A simple app meant to be run in background. Automates the process of streaming files over the local network. Install it on device with any Linux DE to turn it into your own cast receiver that plays files casted with [Cast to TV](https://rafostar.github.io/gnome-shell-extension-cast-to-tv) from your host PC.
+A simple app meant to be run in background. Automates the process of streaming files over the local network. Install it on device with any Linux DE to turn your media player into cast receiver that plays files casted with [Cast to TV](https://rafostar.github.io/gnome-shell-extension-cast-to-tv) from your host PC.
 
 To receive media set `Playercast app` as your receiver type in Cast to TV settings.
 
