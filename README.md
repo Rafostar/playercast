@@ -79,11 +79,11 @@ It can be disabled with `--disable-cec` option.
 Default keymap for controlling media player with TV remote.
 
 ```
-`Up`       - switch video track                   `Play`         - play
-`Down`     - switch audio track                   `Pause`        - pause
-`Left`     - previous item in playlist            `Rewind`       - seek backward 10 sec
-`Right`    - next item in playlist                `Fast forward` - seek forward 10 sec
-`Select`   - cycle fullscreen                     `Exit`/`Stop`  - stop player
+`Up`       - switch video track                       `Play`         - play
+`Down`     - switch audio track                       `Pause`        - pause
+`Left`     - previous item in playlist                `Rewind`       - seek backward 10 sec
+`Right`    - next item in playlist                    `Fast forward` - seek forward 10 sec
+`Select`   - cycle fullscreen                         `Exit`/`Stop`  - stop player
 `Subtitle` - switch subtitles
 ```
 
@@ -91,10 +91,10 @@ Default keymap for controlling media player with TV remote.
 Alternative keymap can be enabled with `--cec-alt-remote` option.
 
 ```
-`Up`                   - increase volume          `Select`       - cycle pause
-`Down`                 - decrease volume          `Play`         - play
-`Left`/`Rewind`        - seek backward 10 sec     `Pause`        - pause
-`Right`/`Fast forward` - seek forward 10 sec      `Exit`/`Stop`  - stop player
+`Up`                   - next item in playlist        `Select`       - cycle pause
+`Down`                 - previous item in playlist    `Play`         - play
+`Left`/`Rewind`        - seek backward 10 sec         `Pause`        - pause
+`Right`/`Fast forward` - seek forward 10 sec          `Exit`/`Stop`  - stop player
 `Red`                  - switch video track
 `Green`                - switch audio track
 `Yellow`/`Subtitle`    - switch subtitles

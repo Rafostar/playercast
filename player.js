@@ -303,14 +303,10 @@ function onCecKeyPressAlt(keyName)
 			controller.player.cyclePause();
 			break;
 		case 'up':
-			if(status.volume < 0.9) value = status.volume + 0.1;
-			else value = 1;
-			onRemoteSignal({ action: 'VOLUME', value: value });
+			websocket.emit('playercast-ctl', 'next-track');
 			break;
 		case 'down':
-			if(status.volume > 0.1) value = status.volume - 0.1;
-			else value = 0;
-			onRemoteSignal({ action: 'VOLUME', value: value });
+			websocket.emit('playercast-ctl', 'previous-track');
 			break;
 		case 'left':
 		case 'rewind':
