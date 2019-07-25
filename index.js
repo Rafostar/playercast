@@ -5,7 +5,7 @@ const player = require('./player');
 const service = require('./service');
 
 const opts = {
-	boolean: ['quiet', 'disable-cec', 'create-service', 'remove-service'],
+	boolean: ['quiet', 'cec-alt-remote', 'disable-cec', 'create-service', 'remove-service'],
 	string: ['name'],
 	alias: { q: 'quiet', n: 'name' },
 	unknown: (option) => onUnknown(option)
@@ -79,6 +79,7 @@ function showHelp()
 		`OPTIONS:`,
 		`  -q, --quiet          Do not print player status info except errors`,
 		`  -n, --name           Name your receiver (default: "Playercast-XXXX")`,
+		`  --cec-alt-remote     Use alternative TV remote key mappings`,
 		`  --disable-cec        Do not use HDMI CEC functionality`,
 		`  --create-service     Creates systemd service with currently used options`,
 		`  --remove-service     Removes playercast systemd service file`,

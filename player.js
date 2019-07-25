@@ -1,5 +1,7 @@
 const PlayerController = require('media-player-controller');
+const CecController = require('cec-controller');
 const ioClient = require('socket.io-client');
+const fs = require('fs');
 const cecClient = require('./cec');
 
 var websocket;
@@ -24,20 +26,47 @@ var player =
 		opts = config;
 		controller = new PlayerController(opts);
 
-		if(!config['disable-cec'])
+		var createWebSocket = () =>
 		{
-			writeLine('Checking HDMI CEC support...');
-			cec = cecClient();
+			websocket = ioClient(opts.websocket);
+			writeLine(`Connecting to ${opts.websocket}...`);
+
+			websocket.on('connect', () => onPlayerConnect());
+			websocket.on('disconnect', () => onPlayerDisconnect());
+			websocket.on('remote-signal', (msg) => onRemoteSignal(msg));
+			websocket.on('playercast', (msg) => onPlayerCast(msg));
+			websocket.on('invalid', (msg) => onPlayerInvalid(msg));
 		}
 
-		websocket = ioClient(opts.websocket);
-		writeLine(`Connecting to ${opts.websocket}...`);
+		var onCecInit = (client) =>
+		{
+			if(client)
+			{
+				writeLine('HDMI CEC is supported');
 
-		websocket.on('connect', () => onPlayerConnect());
-		websocket.on('disconnect', () => onPlayerDisconnect());
-		websocket.on('remote-signal', (msg) => onRemoteSignal(msg));
-		websocket.on('playercast', (msg) => onPlayerCast(msg));
-		websocket.on('invalid', (msg) => onPlayerInvalid(msg));
+				cec = client;
+				if(!config['cec-alt-remote'])
+					cec.events.on('keypress', onCecKeyPress);
+				else
+					cec.events.on('keypress', onCecKeyPressAlt);
+			}
+			else
+			{
+				writeLine('HDMI CEC is not supported');
+			}
+
+			setTimeout(createWebSocket, 2000);
+		}
+
+		if(config['disable-cec'] || !fs.existsSync('/usr/bin/cec-client'))
+		{
+			createWebSocket();
+		}
+		else
+		{
+			writeLine('Checking HDMI CEC support...');
+			cecClient().then(onCecInit);
+		}
 	}
 }
 
@@ -57,18 +86,8 @@ function onPlayerCast(msg)
 		{
 			writeLine('Sending HDMI CEC signals...');
 
-			var tvStatus = await cec.tv.getStatus();
-			if(tvStatus === 'standby')
-			{
-				await cec.tv.turnOn();
-
-				while(tvStatus !== 'on')
-				{
-					tvStatus = await cec.tv.getStatus();
-				}
-			}
-
-			cec.setActive();
+			await cec.ctl.dev0.turnOn();
+			cec.ctl.setActive();
 		}
 
 		controller.opts.playerArgs = getPlayerArgs(msg);
@@ -134,8 +153,9 @@ function onPlayerLaunch()
 
 	controller.process.once('close', (code) =>
 	{
+		isControlled = false;
 		websocket.emit('show-remote', false);
-		if(cec) cec.setInactive();
+		if(cec) cec.ctl.setInactive();
 
 		if(updateInterval)
 		{
@@ -216,6 +236,112 @@ function onRemoteSignal(msg)
 			break;
 		case 'STOP':
 			controller.quit();
+			break;
+		default:
+			break;
+	}
+}
+
+function onCecKeyPress(keyName)
+{
+	if(!controller || !isControlled) return;
+
+	var value;
+	var seekTime = 10;
+
+	switch(keyName)
+	{
+		case 'select':
+			controller.player.cycleFullscreen();
+			break;
+		case 'up':
+			controller.player.cycleVideo();
+			break;
+		case 'down':
+			controller.player.cycleAudio();
+			break;
+		case 'left':
+			websocket.emit('playercast-ctl', 'previous-track');
+			break;
+		case 'right':
+			websocket.emit('playercast-ctl', 'next-track');
+			break;
+		case 'play':
+			onRemoteSignal({ action: 'PLAY' });
+			break;
+		case 'pause':
+			onRemoteSignal({ action: 'PAUSE' });
+			break;
+		case 'rewind':
+			onRemoteSignal({ action: 'SEEK-', value: seekTime });
+			break;
+		case 'fast-forward':
+			onRemoteSignal({ action: 'SEEK+', value: seekTime });
+			break;
+		case 'subtitle':
+			controller.player.cycleSubs();
+			break;
+		case 'exit':
+		case 'stop':
+			onRemoteSignal({ action: 'STOP' });
+			break;
+		default:
+			break;
+	}
+}
+
+function onCecKeyPressAlt(keyName)
+{
+	if(!controller || !isControlled) return;
+
+	var value;
+	var seekTime = 10;
+
+	switch(keyName)
+	{
+		case 'select':
+			controller.player.cyclePause();
+			break;
+		case 'up':
+			if(status.volume < 0.9) value = status.volume + 0.1;
+			else value = 1;
+			onRemoteSignal({ action: 'VOLUME', value: value });
+			break;
+		case 'down':
+			if(status.volume > 0.1) value = status.volume - 0.1;
+			else value = 0;
+			onRemoteSignal({ action: 'VOLUME', value: value });
+			break;
+		case 'left':
+		case 'rewind':
+			onRemoteSignal({ action: 'SEEK-', value: seekTime });
+			break;
+		case 'right':
+		case 'fast-forward':
+			onRemoteSignal({ action: 'SEEK+', value: seekTime });
+			break;
+		case 'red':
+			controller.player.cycleVideo();
+			break;
+		case 'green':
+			controller.player.cycleAudio();
+			break;
+		case 'yellow':
+		case 'subtitle':
+			controller.player.cycleSubs();
+			break;
+		case 'blue':
+			controller.player.cycleFullscreen();
+			break;
+		case 'play':
+			onRemoteSignal({ action: 'PLAY' });
+			break;
+		case 'pause':
+			onRemoteSignal({ action: 'PAUSE' });
+			break;
+		case 'exit':
+		case 'stop':
+			onRemoteSignal({ action: 'STOP' });
 			break;
 		default:
 			break;

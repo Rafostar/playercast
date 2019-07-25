@@ -17,7 +17,7 @@ To receive media set `Playercast app` as your receiver type in Cast to TV settin
 * Automatically starts media player upon cast
 * Can be installed on any Linux distro with any DE
 * Remotely control playback from GNOME top bar
-* Supports HDMI CEC (turns on TV and changes video source)
+* Supports HDMI CEC
 
 ## Installation
 ```
@@ -74,6 +74,32 @@ sudo apt install cec-utils
 ```
 CEC functionality is automatically detected and enabled on app launch.<br>
 It can be disabled with `--disable-cec` option.
+
+### TV Remote buttons keymap
+Default keymap for controlling media player with TV remote.
+
+```
+`Up`       - switch video track                   `Play`         - play
+`Down`     - switch audio track                   `Pause`        - pause
+`Left`     - previous item in playlist            `Rewind`       - seek backward 10 sec
+`Right`    - next item in playlist                `Fast forward` - seek forward 10 sec
+`Select`   - cycle fullscreen                     `Exit`/`Stop`  - stop player
+`Subtitle` - switch subtitles
+```
+
+### Alternative buttons keymap
+Alternative keymap can be enabled with `--cec-alt-remote` option.
+
+```
+`Up`                   - increase volume          `Select`       - cycle pause
+`Down`                 - decrease volume          `Play`         - play
+`Left`/`Rewind`        - seek backward 10 sec     `Pause`        - pause
+`Right`/`Fast forward` - seek forward 10 sec      `Exit`/`Stop`  - stop player
+`Red`                  - switch video track
+`Green`                - switch audio track
+`Yellow`/`Subtitle`    - switch subtitles
+`Blue`                 - cycle fullscreen
+```
 
 ## Donation
 If you like my work please support it by buying me a cup of coffee :-)

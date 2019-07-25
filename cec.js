@@ -1,44 +1,35 @@
-var CecController = require('cec-controller');
+const CecController = require('cec-controller');
+var resolved = false;
 
 module.exports = () =>
 {
-	var cec = new CecController();
-
-	var myCec = {};
-	var keys = Object.keys(cec);
-
-	if(keys.length === 0)
-		return null;
-
-	for(var key of keys)
+	return new Promise((resolve, reject) =>
 	{
-		var currObj = cec[key];
+		var events = new CecController({ osdString: 'Playercast' });
 
-		if(typeof currObj !== 'object')
-			continue;
-
-		if(currObj.hasOwnProperty('name') && currObj.name === 'TV')
+		var onReady = (ctl) =>
 		{
-			myCec.tv = {};
-
-			Object.keys(currObj).forEach(key =>
+			if(!resolved)
 			{
-				if(typeof currObj[key] === 'function')
-					myCec.tv[key] = currObj[key].bind(this);
-			});
+				resolved = true;
 
-			break;
+				if(ctl.hasOwnProperty('dev0'))
+					resolve({ events, ctl });
+				else
+					resolve(null);
+			}
 		}
-	}
 
-	if(!myCec.hasOwnProperty('tv'))
-		return null;
+		var onError = (err) =>
+		{
+			if(!resolved)
+			{
+				resolved = true;
+				resolve(null);
+			}
+		}
 
-	keys.forEach(key =>
-	{
-		if(typeof cec[key] === 'function')
-			myCec[key] = cec[key].bind(this);
+		events.on('ready', onReady);
+		events.on('error', onError);
 	});
-
-	return myCec;
 }
