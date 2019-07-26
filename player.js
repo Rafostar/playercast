@@ -407,7 +407,8 @@ function getPlayerArgs(selection)
 	{
 		case 'mpv':
 			const mpvUniversal = ['--no-ytdl', '--fullscreen', '--volume-max=100',
-				'--keep-open=yes', `--sub-file=${opts.subtitles}`, '--image-display-duration=inf'];
+				'--keep-open=yes', `--sub-file=${opts.subtitles}`, '--image-display-duration=inf',
+				`--force-media-title=${getMediaTitle(selection)}`];
 			const mpvVideo = ['--loop=no', '--osc=yes', '--cache=auto'];
 			const mpvPicture = ['--loop=inf', '--osc=no', '--cache=auto'];
 			const mpvDesktop = ['--loop=no', '--osc=yes', '--cache=no'];
@@ -432,6 +433,7 @@ function setPlayerProperties(selection)
 	switch(opts.player)
 	{
 		case 'mpv':
+			controller.player.command(['set_property', 'force-media-title', getMediaTitle(selection)]);
 			if(selection.streamType === 'PICTURE')
 			{
 				controller.player.setRepeat(true);
@@ -449,6 +451,19 @@ function setPlayerProperties(selection)
 		default:
 			writeError(`Cannot set properties of unsupported media player: ${opts.player}`);
 			break;
+	}
+}
+
+function getMediaTitle(selection)
+{
+	if(selection.title) return selection.title;
+	else
+	{
+		var filename = selection.filePath;
+		var title = filename.substring(filename.lastIndexOf('/') + 1, filename.lastIndexOf('.'));
+
+		if(title) return title;
+		else return "Playercast";
 	}
 }
 
