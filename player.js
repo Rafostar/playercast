@@ -385,6 +385,10 @@ function updateStatus(data)
 				case 'pause':
 					status.playerState = (msg.data === true) ? 'PAUSED' : 'PLAYING';
 					break;
+				case 'eof-reached':
+					if(msg.data === true)
+						websocket.emit('playercast-ctl', 'track-ended');
+					break;
 				default:
 					writeError(`Unhandled property: ${msg}`);
 					break;
@@ -400,7 +404,7 @@ function getPlayerArgs(selection)
 	switch(opts.player)
 	{
 		case 'mpv':
-			const mpvUniversal = ['--no-ytdl', '--fullscreen',
+			const mpvUniversal = ['--no-ytdl', '--fullscreen', '--keep-open=yes',
 				`--sub-file=${opts.subtitles}`, '--image-display-duration=inf'];
 			const mpvVideo = ['--loop=no', '--osc=yes'];
 			const mpvPicture = ['--loop=inf', '--osc=no'];
