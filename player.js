@@ -408,11 +408,14 @@ function getPlayerArgs(selection)
 		case 'mpv':
 			const mpvUniversal = ['--no-ytdl', '--fullscreen', '--volume-max=100',
 				'--keep-open=yes', `--sub-file=${opts.subtitles}`, '--image-display-duration=inf'];
-			const mpvVideo = ['--loop=no', '--osc=yes'];
-			const mpvPicture = ['--loop=inf', '--osc=no'];
+			const mpvVideo = ['--loop=no', '--osc=yes', '--cache=auto'];
+			const mpvPicture = ['--loop=inf', '--osc=no', '--cache=auto'];
+			const mpvDesktop = ['--loop=no', '--osc=yes', '--cache=no'];
 
 			if(selection.streamType === 'PICTURE')
 				args = [ ...mpvUniversal, ...mpvPicture];
+			else if(selection.addon === 'DESKTOP')
+				args = [ ...mpvUniversal, ...mpvDesktop];
 			else
 				args = [ ...mpvUniversal, ...mpvVideo];
 			break;
@@ -433,12 +436,15 @@ function setPlayerProperties(selection)
 			{
 				controller.player.setRepeat(true);
 				controller.player.command(['set_property', 'osc', 'no']);
+				controller.player.command(['set_property', 'cache', 'auto']);
+				break;
 			}
+			controller.player.setRepeat(false);
+			controller.player.command(['set_property', 'osc', 'yes']);
+			if(selection.addon === 'DESKTOP')
+				controller.player.command(['set_property', 'cache', 'no']);
 			else
-			{
-				controller.player.setRepeat(false);
-				controller.player.command(['set_property', 'osc', 'yes']);
-			}
+				controller.player.command(['set_property', 'cache', 'auto']);
 			break;
 		default:
 			writeError(`Cannot set properties of unsupported media player: ${opts.player}`);
