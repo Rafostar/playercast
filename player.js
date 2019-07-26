@@ -395,6 +395,8 @@ function updateStatus(data)
 			}
 		}
 	}
+
+	writePlayerStatus();
 }
 
 function getPlayerArgs(selection)
@@ -404,8 +406,8 @@ function getPlayerArgs(selection)
 	switch(opts.player)
 	{
 		case 'mpv':
-			const mpvUniversal = ['--no-ytdl', '--fullscreen', '--keep-open=yes',
-				`--sub-file=${opts.subtitles}`, '--image-display-duration=inf'];
+			const mpvUniversal = ['--no-ytdl', '--fullscreen', '--volume-max=100',
+				'--keep-open=yes', `--sub-file=${opts.subtitles}`, '--image-display-duration=inf'];
 			const mpvVideo = ['--loop=no', '--osc=yes'];
 			const mpvPicture = ['--loop=inf', '--osc=no'];
 
@@ -442,6 +444,45 @@ function setPlayerProperties(selection)
 			writeError(`Cannot set properties of unsupported media player: ${opts.player}`);
 			break;
 	}
+}
+
+function convertTime(time)
+{
+	var hours = ('0' + Math.floor(time / 3600)).slice(-2);
+	time -= hours * 3600;
+	var minutes = ('0' + Math.floor(time / 60)).slice(-2);
+	time -= minutes * 60;
+	var seconds = ('0' + Math.floor(time)).slice(-2);
+
+	return `${hours}:${minutes}:${seconds}`;
+}
+
+function writePlayerStatus()
+{
+	if(	opts.quiet
+		|| !(status.currentTime > 0)
+		|| !(status.media.duration > 0)
+	) {
+		return;
+	}
+
+	var text = status.playerState;
+	while(text.length < 8) text += ' ';
+
+	var current = convertTime(status.currentTime);
+	var total = convertTime(status.media.duration);
+	var volume = Math.floor(status.volume * 100);
+
+	text += `${current}/${total} VOLUME:${volume}`;
+
+	var totalLength = 36;
+	while(text.length < totalLength) text += ' ';
+
+	process.stdout.cursorTo(totalLength);
+	process.stdout.clearLine(1);
+
+	process.stdout.cursorTo(0);
+	process.stdout.write(text);
 }
 
 function writeLine(text)

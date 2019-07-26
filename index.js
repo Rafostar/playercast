@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const parseArgs = require('minimist');
+const cliCursor = require('cli-cursor');
 const player = require('./player');
 const service = require('./service');
 
@@ -40,6 +41,8 @@ config.name = (config.name) ? config.name : makeRandomName();
 if(argv['create-service']) service.create(server, config);
 else if(argv['remove-service']) service.remove();
 else player.listen(config);
+
+cliCursor.hide();
 
 function onUnknown(option)
 {
