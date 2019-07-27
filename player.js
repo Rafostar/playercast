@@ -8,8 +8,6 @@ var websocket;
 var controller;
 var cec;
 var opts;
-
-var updateInterval;
 var isControlled = false;
 
 var status = {
@@ -140,8 +138,6 @@ function onPlayerDisconnect()
 
 function onPlayerLaunch()
 {
-	updateInterval = setInterval(() => websocket.emit('status-update', status), 500);
-
 	controller.process.stdout.once('data', () =>
 	{
 		if(controller.player.socket)
@@ -156,12 +152,6 @@ function onPlayerLaunch()
 		isControlled = false;
 		websocket.emit('show-remote', false);
 		if(cec) cec.ctl.setInactive();
-
-		if(updateInterval)
-		{
-			clearInterval(updateInterval);
-			updateInterval = null;
-		}
 
 		if(code) writeError(`Player exited with status code: ${code}`);
 
@@ -182,26 +172,20 @@ function onRemoteSignal(msg)
 		case 'PLAY':
 			controller.player.play((err) =>
 			{
-				if(err) return;
-				status.playerState = 'PLAYING';
-				websocket.emit('status-update', status);
+				if(err) writeError(err.message);
 			});
 			break;
 		case 'PAUSE':
 			controller.player.pause((err) =>
 			{
-				if(err) return;
-				status.playerState = 'PAUSED';
-				websocket.emit('status-update', status);
+				if(err) writeError(err.message);
 			});
 			break;
 		case 'SEEK':
 			position = msg.value * status.media.duration;
 			controller.player.seek(position, (err) =>
 			{
-				if(err) return;
-				status.currentTime = position;
-				websocket.emit('status-update', status);
+				if(err) writeError(err.message);
 			});
 			break;
 		case 'SEEK+':
@@ -210,9 +194,7 @@ function onRemoteSignal(msg)
 			{
 				controller.player.seek(position, (err) =>
 				{
-					if(err) return;
-					status.currentTime = position;
-					websocket.emit('status-update', status);
+					if(err) writeError(err.message);
 				});
 			}
 			break;
@@ -221,17 +203,13 @@ function onRemoteSignal(msg)
 			if(position < 0) position = 0;
 			controller.player.seek(position, (err) =>
 			{
-				if(err) return;
-				status.currentTime = position;
-				websocket.emit('status-update', status);
+				if(err) writeError(err.message);
 			});
 			break;
 		case 'VOLUME':
 			controller.player.setVolume(msg.value * 100, (err) =>
 			{
-				if(err) return;
-				status.volume = msg.value;
-				websocket.emit('status-update', status);
+				if(err) writeError(err.message);
 			});
 			break;
 		case 'STOP':
@@ -375,15 +353,24 @@ function updateStatus(data)
 					var volume = msg.data / 100;
 					if(volume > 1) volume = 1;
 					status.volume = volume;
+					writePlayerStatus();
 					break;
 				case 'time-pos':
+					var floorCurr = Math.floor(status.currentTime);
+					var floorData = Math.floor(msg.data);
 					status.currentTime = msg.data;
+					if(Math.abs(floorCurr - floorData) >= 1)
+					{
+						writePlayerStatus();
+						websocket.emit('status-update', status);
+					}
 					break;
 				case 'duration':
 					status.media.duration = msg.data;
 					break;
 				case 'pause':
 					status.playerState = (msg.data === true) ? 'PAUSED' : 'PLAYING';
+					writePlayerStatus();
 					break;
 				case 'eof-reached':
 					if(msg.data === true)
@@ -393,10 +380,11 @@ function updateStatus(data)
 					writeError(`Unhandled property: ${msg}`);
 					break;
 			}
+
+			if(msg.name !== 'time-pos')
+				websocket.emit('status-update', status);
 		}
 	}
-
-	writePlayerStatus();
 }
 
 function getPlayerArgs(selection)
