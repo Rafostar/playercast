@@ -5,6 +5,12 @@ const cliCursor = require('cli-cursor');
 const player = require('./player');
 const service = require('./service');
 
+process.stdin.once('readable', () => disableInput());
+process.on('SIGINT', () => player.close());
+process.on('SIGTERM', () => player.close());
+process.on('uncaughtException', (err) => player.close(err));
+cliCursor.hide();
+
 const opts = {
 	boolean: ['quiet', 'cec-alt-remote', 'disable-cec', 'create-service', 'remove-service'],
 	string: ['name'],
@@ -42,11 +48,6 @@ if(argv['create-service']) service.create(server, config);
 else if(argv['remove-service']) service.remove();
 else player.listen(config);
 
-cliCursor.hide();
-process.on('SIGINT', () => player.close());
-process.on('SIGTERM', () => player.close());
-process.on('uncaughtException', (err) => player.close(err));
-
 function onUnknown(option)
 {
 	if(option.includes('-'))
@@ -67,6 +68,28 @@ function makeRandomName()
 	}
 
 	return text;
+}
+
+function disableInput()
+{
+	if(!process.stdin.isTTY) return;
+
+	process.stdin.setRawMode(true);
+	process.stdin.setEncoding('utf8');
+
+	process.stdin.on('data', (key) =>
+	{
+		switch(key)
+		{
+			case '\u0003': // ctrl-c
+			case '\u0071': // q
+			case '\u001B': // Esc
+				player.close();
+				break;
+			default:
+				break;
+		}
+	});
 }
 
 function showHelp()

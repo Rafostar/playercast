@@ -510,11 +510,7 @@ function writePlayerStatus()
 
 	text += `${current}/${total} VOLUME:${volume}`;
 
-	var totalLength = 36;
-	while(text.length < totalLength) text += ' ';
-
-	process.stdout.cursorTo(totalLength);
-	process.stdout.clearLine(1);
+	while(text.length < 36) text += ' ';
 
 	process.stdout.cursorTo(0);
 	process.stdout.write(text);
