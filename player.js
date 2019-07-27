@@ -65,6 +65,29 @@ var player =
 			writeLine('Checking HDMI CEC support...');
 			cecClient().then(onCecInit);
 		}
+	},
+
+	close: (err) =>
+	{
+		writeLine('Playercast closing...');
+
+		if(controller.process)
+			controller.quit();
+
+		if(isControlled && websocket)
+			websocket.emit('show-remote', false);
+
+		if(err)
+		{
+			writeError(err.message);
+			process.exit(1);
+		}
+		else
+		{
+			writeLine('Playercast closed');
+			process.stdout.write('\n');
+			process.exit(0);
+		}
 	}
 }
 
@@ -213,7 +236,10 @@ function onRemoteSignal(msg)
 			});
 			break;
 		case 'STOP':
-			controller.quit();
+			controller.quit((err) =>
+			{
+				if(err) writeError(err.message);
+			});
 			break;
 		default:
 			break;

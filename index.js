@@ -43,6 +43,9 @@ else if(argv['remove-service']) service.remove();
 else player.listen(config);
 
 cliCursor.hide();
+process.on('SIGINT', () => player.close());
+process.on('SIGTERM', () => player.close());
+process.on('uncaughtException', (err) => player.close(err));
 
 function onUnknown(option)
 {
