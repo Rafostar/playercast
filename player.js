@@ -517,24 +517,27 @@ function convertTime(time)
 
 function writePlayerStatus()
 {
-	if(	isLive
-		|| opts.quiet
-		|| !(status.currentTime > 0)
-		|| !(status.media.duration > 0)
-	) {
-		return;
-	}
+	if(opts.quiet || !(status.currentTime >= 0.01)) return;
 
 	var text = status.playerState;
 	while(text.length < 8) text += ' ';
 
 	var current = convertTime(status.currentTime);
-	var total = convertTime(status.media.duration);
+	var total = (isLive === false && status.media.duration > 0) ?
+		convertTime(status.media.duration) : null;
+
 	var volume = Math.floor(status.volume * 100);
 
-	text += `${current}/${total} VOLUME:${volume}`;
+	var outChars = 36;
 
-	while(text.length < 36) text += ' ';
+	if(total) text += `${current}/${total} VOLUME:${volume}`;
+	else
+	{
+		text += `${current} VOLUME:${volume}`;
+		outChars = 27;
+	}
+
+	while(text.length < outChars) text += ' ';
 
 	process.stdout.cursorTo(0);
 	process.stdout.write(text);
