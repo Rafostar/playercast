@@ -174,7 +174,17 @@ function onPlayerLaunch()
 	{
 		isControlled = false;
 		websocket.emit('show-remote', false);
-		if(cec) cec.ctl.setInactive();
+
+		if(cec)
+		{
+			cec.ctl.setInactive().then(() =>
+			{
+				var hdmiPort = opts['cec-end-hdmi'];
+
+				if(hdmiPort > 0 && hdmiPort < 10)
+					cec.ctl.dev0.changeSource(hdmiPort);
+			});
+		}
 
 		if(code) writeError(`Player exited with status code: ${code}`);
 

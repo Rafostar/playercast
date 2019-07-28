@@ -4,7 +4,7 @@ const servicePath = `${systemdPath}/playercast.service`;
 
 module.exports =
 {
-	create: (server, config) =>
+	create: (server, argv) =>
 	{
 		if(!fs.existsSync(systemdPath))
 		{
@@ -12,22 +12,29 @@ module.exports =
 			fs.mkdirSync(systemdPath);
 		}
 
-		var execString = `${process.argv[1]} ${server.ip}:${server.port} -q -n '${config.name}'`;
+		var execString = `${process.argv[1]} ${server.ip}:${server.port} -q -n '${argv.name}'`;
 
-		const configFilter = (option) =>
+		const argvFilter = (option) =>
 		{
-			if(	option !== 'quiet'
+			if(	option !== '_'
+				&& option !== 'quiet'
+				&& option !== 'name'
 				&& option !== 'create-service'
 				&& option !== 'remove-service'
-				&& option.length > 1
-				&& config[option] === true
+				&& option.length > 1 // Do not process aliases
 			) {
 				return option;
 			}
 		}
 
-		const options = Object.keys(config).filter(configFilter);
-		options.forEach(option => execString += ` --${option}`);
+		const options = Object.keys(argv).filter(argvFilter);
+		options.forEach(option =>
+		{
+			if(argv[option] === true)
+				execString += ` --${option}`;
+			else if(argv[option] !== false)
+				execString += ` --${option} '${argv[option]}'`;
+		});
 
 		const contents = [
 			`[Unit]`,

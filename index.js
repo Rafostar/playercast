@@ -12,7 +12,7 @@ cliCursor.hide();
 
 const opts = {
 	boolean: ['quiet', 'cec-alt-remote', 'disable-cec', 'create-service', 'remove-service'],
-	string: ['name'],
+	string: ['name', 'cec-end-hdmi'],
 	alias: { q: 'quiet', n: 'name' },
 	unknown: (option) => onUnknown(option)
 };
@@ -43,7 +43,7 @@ const playerOpts = {
 var config = { ...playerOpts, ...argv };
 config.name = (config.name) ? config.name : makeRandomName();
 
-if(argv['create-service']) service.create(server, config);
+if(argv['create-service']) service.create(server, argv);
 else if(argv['remove-service']) service.remove();
 else {
 	disableInput();
@@ -108,12 +108,13 @@ function showHelp()
 		`  port - listening port configured in extension (default: 4000)`,
 		``,
 		`OPTIONS:`,
-		`  -q, --quiet          Do not print player status info except errors`,
-		`  -n, --name           Name your receiver (default: "Playercast-XXXX")`,
-		`  --cec-alt-remote     Use alternative TV remote key mappings`,
-		`  --disable-cec        Do not use HDMI CEC functionality`,
-		`  --create-service     Creates systemd service with currently used options`,
-		`  --remove-service     Removes playercast systemd service file`,
+		`  -q, --quiet                Do not print player status info except errors`,
+		`  -n, --name                 Name your receiver (default: "Playercast-XXXX")`,
+		`  --cec-end-hdmi <number>    Switch TV to specified HDMI port after playback`,
+		`  --cec-alt-remote           Use alternative TV remote key mappings`,
+		`  --disable-cec              Do not use HDMI CEC functionality`,
+		`  --create-service           Creates systemd service with used options`,
+		`  --remove-service           Removes playercast systemd service file`,
 		``
 	].join('\n'));
 }
