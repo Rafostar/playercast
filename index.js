@@ -88,6 +88,9 @@ function disableInput()
 			case '\u001B': // Esc
 				player.close();
 				break;
+			case '\u0020': // Space
+				player.action('cyclePause');
+				break;
 			default:
 				break;
 		}

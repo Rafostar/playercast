@@ -9,6 +9,7 @@ var controller;
 var cec;
 var opts;
 var isControlled = false;
+var isLive = false;
 
 var status = {
 	playerState: 'PAUSED',
@@ -88,6 +89,13 @@ var player =
 			process.stdout.write('\n');
 			process.exit(0);
 		}
+	},
+
+	action: (fnc) =>
+	{
+		if(!controller || !isControlled) return;
+
+		controller.player[fnc]();
 	}
 }
 
@@ -100,6 +108,8 @@ function onPlayerCast(msg)
 
 	if(!controller)
 		return writeError('Controller not initialized!');
+
+	isLive = (msg.streamType && msg.streamType.startsWith('VIDEO_')) ? true : false;
 
 	var launchPlayer = async(isRestart) =>
 	{
@@ -504,7 +514,8 @@ function convertTime(time)
 
 function writePlayerStatus()
 {
-	if(	opts.quiet
+	if(	isLive
+		|| opts.quiet
 		|| !(status.currentTime > 0)
 		|| !(status.media.duration > 0)
 	) {
