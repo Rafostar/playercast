@@ -5,7 +5,6 @@ const cliCursor = require('cli-cursor');
 const player = require('./player');
 const service = require('./service');
 
-process.stdin.once('readable', () => disableInput());
 process.on('SIGINT', () => player.close());
 process.on('SIGTERM', () => player.close());
 process.on('uncaughtException', (err) => player.close(err));
@@ -46,7 +45,10 @@ config.name = (config.name) ? config.name : makeRandomName();
 
 if(argv['create-service']) service.create(server, config);
 else if(argv['remove-service']) service.remove();
-else player.listen(config);
+else {
+	disableInput();
+	player.listen(config);
+}
 
 function onUnknown(option)
 {
