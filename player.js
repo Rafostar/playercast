@@ -72,11 +72,13 @@ var player =
 	{
 		writeLine('Playercast closing...');
 
-		if(controller.process)
+		if(controller && controller.process)
 			controller.quit();
 
 		if(isControlled && websocket)
 			websocket.emit('show-remote', false);
+
+		if(cec) cec.events.closeClient();
 
 		if(err)
 		{
