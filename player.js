@@ -41,10 +41,10 @@ var player =
 		{
 			if(client)
 			{
-				writeLine('HDMI CEC is supported');
+				process.stdout.write(' OK');
 
 				cec = client;
-				if(!config['cec-alt-remote'])
+				if(!opts['cec-alt-remote'])
 					cec.events.on('keypress', onCecKeyPress);
 				else
 					cec.events.on('keypress', onCecKeyPressAlt);
@@ -54,10 +54,11 @@ var player =
 				writeLine('HDMI CEC is not supported');
 			}
 
-			setTimeout(createWebSocket, 2000);
+			if(opts.quiet) createWebSocket();
+			else setTimeout(createWebSocket, 2000);
 		}
 
-		if(config['disable-cec'] || !fs.existsSync('/usr/bin/cec-client'))
+		if(opts['disable-cec'] || !fs.existsSync('/usr/bin/cec-client'))
 		{
 			createWebSocket();
 		}
