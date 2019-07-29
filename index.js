@@ -4,6 +4,7 @@ const parseArgs = require('minimist');
 const cliCursor = require('cli-cursor');
 const player = require('./player');
 const service = require('./service');
+const terminal = require('./terminal');
 
 process.on('SIGINT', () => player.close());
 process.on('SIGTERM', () => player.close());
@@ -21,10 +22,10 @@ const args = process.argv.slice(2);
 const argv = parseArgs(args, opts);
 
 if(argv['remove-service']) return service.remove();
-else if(argv._.length !== 1) return showHelp();
+else if(argv._.length !== 1) return terminal.showHelp();
 
 const data = String(argv._[0]).split(':');
-if(data.length > 2) return showHelp();
+if(data.length > 2) return terminal.showHelp();
 
 const server = {
 	ip: data[0],
@@ -46,7 +47,7 @@ config.name = (config.name) ? config.name : makeRandomName();
 if(argv['create-service']) service.create(server, argv);
 else if(argv['remove-service']) service.remove();
 else {
-	disableInput();
+	terminal.enableKeyInput(player);
 	player.listen(config);
 }
 
@@ -54,7 +55,7 @@ function onUnknown(option)
 {
 	if(option.includes('-'))
 	{
-		showHelp();
+		terminal.showHelp();
 		process.exit();
 	}
 }
@@ -70,54 +71,4 @@ function makeRandomName()
 	}
 
 	return text;
-}
-
-function disableInput()
-{
-	if(!process.stdin.isTTY) return;
-
-	process.stdin.setRawMode(true);
-	process.stdin.setEncoding('utf8');
-
-	process.stdin.on('data', (key) =>
-	{
-		switch(key)
-		{
-			case '\u0003': // ctrl-c
-			case '\u0071': // q
-			case '\u001B': // Esc
-				player.close();
-				break;
-			case '\u0020': // Space
-				player.action('cyclePause');
-				break;
-			default:
-				break;
-		}
-	});
-}
-
-function showHelp()
-{
-	const pkg = require('./package.json');
-
-	console.log([
-		``,
-		`Playercast ${pkg.version}, media receiver for GNOME Shell Extension Cast to TV`,
-		``,
-		`Usage: playercast <ip>[:port] [OPTIONS]`,
-		``,
-		`  ip   - address or hostname of device with Cast to TV extension`,
-		`  port - listening port configured in extension (default: 4000)`,
-		``,
-		`OPTIONS:`,
-		`  -q, --quiet                Do not print player status info except errors`,
-		`  -n, --name                 Name your receiver (default: "Playercast-XXXX")`,
-		`  --cec-end-hdmi <number>    Switch TV to specified HDMI port after playback`,
-		`  --cec-alt-remote           Use alternative TV remote key mappings`,
-		`  --disable-cec              Do not use HDMI CEC functionality`,
-		`  --create-service           Creates systemd service with used options`,
-		`  --remove-service           Removes playercast systemd service file`,
-		``
-	].join('\n'));
 }

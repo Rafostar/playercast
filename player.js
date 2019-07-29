@@ -3,6 +3,7 @@ const CecController = require('cec-controller');
 const ioClient = require('socket.io-client');
 const fs = require('fs');
 const cecClient = require('./cec');
+const terminal = require('./terminal');
 
 var websocket;
 var controller;
@@ -28,7 +29,9 @@ var player =
 		var createWebSocket = () =>
 		{
 			websocket = ioClient(opts.websocket);
-			writeLine(`Connecting to ${opts.websocket}...`);
+
+			if(!opts.quiet)
+				terminal.writeLine(`Connecting to ${opts.websocket}...`);
 
 			websocket.on('connect', () => onPlayerConnect());
 			websocket.on('disconnect', () => onPlayerDisconnect());
@@ -51,7 +54,8 @@ var player =
 			}
 			else
 			{
-				writeLine('HDMI CEC is not supported');
+				if(!opts.quiet)
+					terminal.writeLine('HDMI CEC is not supported');
 			}
 
 			if(opts.quiet) createWebSocket();
@@ -64,14 +68,17 @@ var player =
 		}
 		else
 		{
-			writeLine('Checking HDMI CEC support...');
+			if(!opts.quiet)
+				terminal.writeLine('Checking HDMI CEC support...');
+
 			cecClient().then(onCecInit);
 		}
 	},
 
 	close: (err) =>
 	{
-		writeLine('Playercast closing...');
+		if(!opts.quiet)
+			terminal.writeLine('Playercast closing...');
 
 		if(controller && controller.process)
 			controller.quit();
@@ -83,12 +90,14 @@ var player =
 
 		if(err)
 		{
-			writeError(err.message);
+			terminal.writeError(err.message, opts.quiet);
 			process.exit(1);
 		}
 		else
 		{
-			writeLine('Playercast closed');
+			if(!opts.quiet)
+				terminal.writeLine('Playercast closed');
+
 			process.stdout.write('\n');
 			process.exit(0);
 		}
@@ -110,7 +119,7 @@ function onPlayerCast(msg)
 		return isControlled = false;
 
 	if(!controller)
-		return writeError('Controller not initialized!');
+		return terminal.writeError('Controller not initialized!', opts.quiet);
 
 	isLive = (msg.streamType && msg.streamType.startsWith('VIDEO_')) ? true : false;
 
@@ -118,7 +127,8 @@ function onPlayerCast(msg)
 	{
 		if(cec && !isRestart)
 		{
-			writeLine('Sending HDMI CEC signals...');
+			if(!opts.quiet)
+				terminal.writeLine('Sending HDMI CEC signals...');
 
 			await cec.ctl.dev0.turnOn();
 			cec.ctl.setActive();
@@ -126,10 +136,12 @@ function onPlayerCast(msg)
 
 		controller.opts.playerArgs = getPlayerArgs(msg);
 
-		writeLine(`Starting ${opts.player}...`);
+		if(!opts.quiet)
+			terminal.writeLine(`Starting ${opts.player}...`);
+
 		controller.launch((err) =>
 		{
-			if(err) return writeError(err.message);
+			if(err) return terminal.writeError(err.message, opts.quiet);
 			onPlayerLaunch();
 		});
 	}
@@ -150,7 +162,7 @@ function onPlayerCast(msg)
 
 			controller.quit((err) =>
 			{
-				if(err) writeError(err.message);
+				if(err) terminal.writeError(err.message, opts.quiet);
 			});
 		});
 	}
@@ -162,14 +174,14 @@ function onPlayerCast(msg)
 
 function onPlayerConnect()
 {
-	writeLine(`Connected to ${opts.websocket}`);
+	if(!opts.quiet) terminal.writeLine(`Connected to ${opts.websocket}`);
 	if(opts.name) websocket.emit('playercast-connect', opts.name);
 }
 
 function onPlayerDisconnect()
 {
 	isControlled = false;
-	writeLine('WebSocket disconnected');
+	if(!opts.quiet) terminal.writeLine('WebSocket disconnected');
 }
 
 function onPlayerLaunch()
@@ -179,7 +191,9 @@ function onPlayerLaunch()
 		if(controller.player.socket)
 			controller.player.socket.on('data', (data) => updateStatus(data));
 
-		writeLine('Player started');
+		if(!opts.quiet)
+			terminal.writeLine('Player started');
+
 		websocket.emit('show-remote', true);
 	});
 
@@ -199,12 +213,11 @@ function onPlayerLaunch()
 			});
 		}
 
-		if(code) writeError(`Player exited with status code: ${code}`);
-
-		writeLine(`${opts.name} waiting for media cast...`);
+		if(code) terminal.writeError(`Player exited with status code: ${code}`, opts.quiet);
+		if(!opts.quiet) terminal.writeLine(`${opts.name} waiting for media cast...`);
 	});
 
-	controller.process.once('error', (err) => writeError(err.message));
+	controller.process.once('error', (err) => terminal.writeError(err.message, opts.quiet));
 }
 
 function onRemoteSignal(msg)
@@ -218,20 +231,20 @@ function onRemoteSignal(msg)
 		case 'PLAY':
 			controller.player.play((err) =>
 			{
-				if(err) writeError(err.message);
+				if(err) terminal.writeError(err.message, opts.quiet);
 			});
 			break;
 		case 'PAUSE':
 			controller.player.pause((err) =>
 			{
-				if(err) writeError(err.message);
+				if(err) terminal.writeError(err.message, opts.quiet);
 			});
 			break;
 		case 'SEEK':
 			position = msg.value * status.media.duration;
 			controller.player.seek(position, (err) =>
 			{
-				if(err) writeError(err.message);
+				if(err) terminal.writeError(err.message, opts.quiet);
 			});
 			break;
 		case 'SEEK+':
@@ -240,7 +253,7 @@ function onRemoteSignal(msg)
 			{
 				controller.player.seek(position, (err) =>
 				{
-					if(err) writeError(err.message);
+					if(err) terminal.writeError(err.message, opts.quiet);
 				});
 			}
 			break;
@@ -249,19 +262,19 @@ function onRemoteSignal(msg)
 			if(position < 0) position = 0;
 			controller.player.seek(position, (err) =>
 			{
-				if(err) writeError(err.message);
+				if(err) terminal.writeError(err.message, opts.quiet);
 			});
 			break;
 		case 'VOLUME':
 			controller.player.setVolume(msg.value * 100, (err) =>
 			{
-				if(err) writeError(err.message);
+				if(err) terminal.writeError(err.message, opts.quiet);
 			});
 			break;
 		case 'STOP':
 			controller.quit((err) =>
 			{
-				if(err) writeError(err.message);
+				if(err) terminal.writeError(err.message, opts.quiet);
 			});
 			break;
 		default:
@@ -376,11 +389,11 @@ function onPlayerInvalid(msg)
 	switch(msg)
 	{
 		case 'name':
-			writeError(`Playercast name "${opts.name}" is already used on another device!`);
+			terminal.writeError(`Playercast name "${opts.name}" is already used on another device!`, opts.quiet);
 			process.exit(1);
 			break;
 		case false:
-			writeLine(`${opts.name} waiting for media cast...`);
+			if(!opts.quiet) terminal.writeLine(`${opts.name} waiting for media cast...`);
 			break;
 		default:
 			break;
@@ -402,7 +415,7 @@ function updateStatus(data)
 					var volume = msg.data / 100;
 					if(volume > 1) volume = 1;
 					status.volume = volume;
-					writePlayerStatus();
+					if(!opts.quiet) terminal.writePlayerStatus(status, isLive);
 					break;
 				case 'time-pos':
 					var floorCurr = Math.floor(status.currentTime);
@@ -410,7 +423,9 @@ function updateStatus(data)
 					status.currentTime = msg.data;
 					if(Math.abs(floorCurr - floorData) >= 1)
 					{
-						writePlayerStatus();
+						if(!opts.quiet)
+							terminal.writePlayerStatus(status, isLive);
+
 						websocket.emit('status-update', status);
 					}
 					break;
@@ -419,14 +434,14 @@ function updateStatus(data)
 					break;
 				case 'pause':
 					status.playerState = (msg.data === true) ? 'PAUSED' : 'PLAYING';
-					writePlayerStatus();
+					if(!opts.quiet) terminal.writePlayerStatus(status, isLive);
 					break;
 				case 'eof-reached':
 					if(msg.data === true)
 						websocket.emit('playercast-ctl', 'track-ended');
 					break;
 				default:
-					writeError(`Unhandled property: ${msg}`);
+					terminal.writeError(`Unhandled property: ${msg}`, opts.quiet);
 					break;
 			}
 
@@ -458,7 +473,7 @@ function getPlayerArgs(selection)
 				args = [ ...mpvUniversal, ...mpvVideo];
 			break;
 		default:
-			writeError(`Cannot get args for unsupported media player: ${opts.player}`);
+			terminal.writeError(`Cannot get args for unsupported media player: ${opts.player}`, opts.quiet);
 			break;
 	}
 
@@ -486,7 +501,7 @@ function setPlayerProperties(selection)
 				controller.player.command(['set_property', 'cache', 'auto']);
 			break;
 		default:
-			writeError(`Cannot set properties of unsupported media player: ${opts.player}`);
+			terminal.writeError(`Cannot set properties of unsupported media player: ${opts.player}`, opts.quiet);
 			break;
 	}
 }
@@ -502,60 +517,6 @@ function getMediaTitle(selection)
 		if(title) return title;
 		else return "Playercast";
 	}
-}
-
-function convertTime(time)
-{
-	var hours = ('0' + Math.floor(time / 3600)).slice(-2);
-	time -= hours * 3600;
-	var minutes = ('0' + Math.floor(time / 60)).slice(-2);
-	time -= minutes * 60;
-	var seconds = ('0' + Math.floor(time)).slice(-2);
-
-	return `${hours}:${minutes}:${seconds}`;
-}
-
-function writePlayerStatus()
-{
-	if(opts.quiet || !(status.currentTime >= 0.01)) return;
-
-	var text = status.playerState;
-	while(text.length < 8) text += ' ';
-
-	var current = convertTime(status.currentTime);
-	var total = (isLive === false && status.media.duration > 0) ?
-		convertTime(status.media.duration) : null;
-
-	var volume = Math.floor(status.volume * 100);
-
-	var outChars = 36;
-
-	if(total) text += `${current}/${total} VOLUME:${volume}`;
-	else
-	{
-		text += `${current} VOLUME:${volume}`;
-		outChars = 27;
-	}
-
-	while(text.length < outChars) text += ' ';
-
-	process.stdout.cursorTo(0);
-	process.stdout.write(text);
-}
-
-function writeLine(text)
-{
-	if(opts.quiet) return;
-
-	process.stdout.cursorTo(0);
-	process.stdout.clearLine(0);
-	process.stdout.write(text);
-}
-
-function writeError(text)
-{
-	if(opts.quiet) console.error(text);
-	else console.error('\n' + text);
 }
 
 module.exports = player;
