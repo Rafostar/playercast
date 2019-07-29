@@ -1,3 +1,4 @@
+const path = require('path');
 const PlayerController = require('media-player-controller');
 const CecController = require('cec-controller');
 const ioClient = require('socket.io-client');
@@ -511,8 +512,7 @@ function getMediaTitle(selection)
 	if(selection.title) return selection.title;
 	else
 	{
-		var filename = selection.filePath;
-		var title = filename.substring(filename.lastIndexOf('/') + 1, filename.lastIndexOf('.'));
+		var title = path.parse(selection.filePath).name;
 
 		if(title) return title;
 		else return "Playercast";
