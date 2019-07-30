@@ -6,14 +6,14 @@
 [![Donate](https://img.shields.io/badge/Donate-PayPal.Me-lightgrey.svg)](https://www.paypal.me/Rafostar)
 [![Twitter](https://img.shields.io/twitter/url/https/github.com/Rafostar/playercast.svg?style=social)](https://twitter.com/intent/tweet?text=Wow:&url=https%3A%2F%2Fgithub.com%2FRafostar%2Fplayercast)
 
-A simple app meant to be run in background. Automates the process of streaming files over the local network. Install it on device with any Linux DE to turn your media player into cast receiver that plays files casted with [Cast to TV](https://rafostar.github.io/gnome-shell-extension-cast-to-tv) from your host PC.
+A simple app meant to be run in background. Automates the process of streaming files over the local network. Install it on device with any Linux DE to turn your media player into receiver that plays files cast with [Cast to TV](https://rafostar.github.io/gnome-shell-extension-cast-to-tv) from your host PC.
 
 To receive media set `Playercast app` as your receiver type in Cast to TV settings.
 
-**Only compatible with latest Cast to TV git master that will become future v10.**
+**Only compatible with Cast to TV v10+.**
 
 ## Features
-* Receives casted media from [Cast to TV](https://rafostar.github.io/gnome-shell-extension-cast-to-tv)
+* Receives all types media from [Cast to TV](https://rafostar.github.io/gnome-shell-extension-cast-to-tv)
 * Automatically starts media player upon cast
 * Can be installed on any Linux distro with any DE
 * Remotely control playback from GNOME top bar
@@ -53,7 +53,7 @@ After testing in command line, app can be installed as systemd service with:
 playercast IP:PORT --name 'Bedroom TV' --create-service
 ```
 
-Above command can always be run again to update configuration with new device name, ip or port.
+Above command can always be run again to update configuration with new device name, address or other args.
 
 Remember to enable and start newly added service with:
 
@@ -62,7 +62,7 @@ systemctl --user enable playercast
 systemctl --user start playercast
 ```
 
-App will be running on each system boot as background service idling and waiting to receive casted files.
+App will be running on each system boot as background service idling and waiting to receive cast files.
 
 **It is recommended to assign your server PC a static IP address, otherwise app will not be able to connect when IP changes.**
 
