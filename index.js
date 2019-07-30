@@ -25,7 +25,8 @@ if(argv['remove-service']) return service.remove();
 else if(argv._.length !== 1) return terminal.showHelp();
 
 const data = String(argv._[0]).split(':');
-if(data.length > 2) return terminal.showHelp();
+if(data.length > 2 || !checkArgvStrings())
+	return terminal.showHelp();
 
 const server = {
 	ip: data[0],
@@ -59,6 +60,17 @@ function onUnknown(option)
 		terminal.showHelp();
 		process.exit();
 	}
+}
+
+function checkArgvStrings()
+{
+	if(argv['cec-end-hdmi'] && isNaN(argv['cec-end-hdmi']))
+		return false;
+
+	for(var key of opts.string)
+		if(argv[key] === '') return false;
+
+	return true;
 }
 
 function makeRandomName()

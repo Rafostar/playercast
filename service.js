@@ -33,7 +33,8 @@ module.exports =
 			if(argv[option] === true)
 				execString += ` --${option}`;
 			else if(argv[option] !== false)
-				execString += ` --${option} '${argv[option]}'`;
+				if(isNaN(argv[option])) execString += ` --${option} '${argv[option]}'`;
+				else execString += ` --${option} ${argv[option]}`;
 		});
 
 		const contents = [
