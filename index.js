@@ -36,6 +36,7 @@ const link = `http://${server.ip}:${server.port}`;
 const playerOpts = {
 	media: `${link}/cast`,
 	subtitles: `${link}/subs`,
+	cover: `${link}/cover`,
 	websocket: link,
 	player: 'mpv',
 	ipcPath: '/tmp/cast-socket'

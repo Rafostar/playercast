@@ -460,18 +460,19 @@ function getPlayerArgs(selection)
 	{
 		case 'mpv':
 			const mpvUniversal = ['--no-ytdl', '--fullscreen', '--volume-max=100',
-				'--keep-open=yes', `--sub-file=${opts.subtitles}`, '--image-display-duration=inf',
+				'--keep-open=yes', '--image-display-duration=inf', '--vid=1',
+				`--external-file=${opts.cover}`, `--sub-file=${opts.subtitles}`,
 				`--force-media-title=${getMediaTitle(selection)}`];
 			const mpvVideo = ['--loop=no', '--osc=yes', '--cache=auto'];
 			const mpvPicture = ['--loop=inf', '--osc=no', '--cache=auto'];
 			const mpvDesktop = ['--loop=no', '--osc=yes', '--cache=no'];
 
 			if(selection.streamType === 'PICTURE')
-				args = [ ...mpvUniversal, ...mpvPicture];
+				args = [...mpvUniversal, ...mpvPicture];
 			else if(selection.addon === 'DESKTOP')
-				args = [ ...mpvUniversal, ...mpvDesktop];
+				args = [...mpvUniversal, ...mpvDesktop];
 			else
-				args = [ ...mpvUniversal, ...mpvVideo];
+				args = [...mpvUniversal, ...mpvVideo];
 			break;
 		default:
 			terminal.writeError(`Cannot get args for unsupported media player: ${opts.player}`, opts.quiet);
