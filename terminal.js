@@ -9,18 +9,45 @@ module.exports =
 
 		process.stdin.on('data', (key) =>
 		{
-			switch(key)
+			/* Read arrow keys */
+			if(key.charCodeAt(0) === 27 && key.charCodeAt(1) === 91)
 			{
-				case '\u0003': // ctrl-c
-				case '\u0071': // q
-				case '\u001B': // Esc
-					player.close();
-					break;
-				case '\u0020': // Space
-					player.action('cyclePause');
-					break;
-				default:
-					break;
+				switch(key.charCodeAt(2))
+				{
+					case 65: // Up
+						player.increaseVolume(0.05);
+						break;
+					case 66: // Down
+						player.decreaseVolume(0.05);
+						break;
+					case 67: // Right
+						player.seekForward(10);
+						break;
+					case 68: // Left
+						player.seekBackward(10);
+						break;
+					default:
+						break;
+				}
+			}
+			else
+			{
+				switch(key)
+				{
+					case '\u0003': // ctrl-c
+					case '\u0071': // q
+					case '\u001B': // Esc
+						player.close();
+						break;
+					case '\u0020': // Space
+						player.action('cyclePause');
+						break;
+					case '\u005F': // Underscore
+						player.action('cycleVideo');
+						break;
+					default:
+						break;
+				}
 			}
 		});
 	},

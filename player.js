@@ -109,6 +109,32 @@ var player =
 		if(!controller || !isControlled) return;
 
 		controller.player[fnc]();
+	},
+
+	increaseVolume: (volume) =>
+	{
+		volume = status.volume + volume;
+		if(volume > 1) volume = 1;
+
+		onRemoteSignal({ action: 'VOLUME', value: volume });
+	},
+
+	decreaseVolume: (volume) =>
+	{
+		volume = status.volume - volume;
+		if(volume < 0) volume = 0;
+
+		onRemoteSignal({ action: 'VOLUME', value: volume });
+	},
+
+	seekForward: (seekTime) =>
+	{
+		onRemoteSignal({ action: 'SEEK+', value: seekTime });
+	},
+
+	seekBackward: (seekTime) =>
+	{
+		onRemoteSignal({ action: 'SEEK-', value: seekTime });
 	}
 }
 
