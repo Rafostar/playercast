@@ -175,15 +175,24 @@ function onPlayerCast(msg)
 
 	if(controller.process && controller.player)
 	{
+		if(!opts.quiet)
+			terminal.writeLine('Loading new media...');
+
 		setPlayerProperties(msg);
 
 		controller.player.load(opts.media, (err) =>
 		{
 			if(!err)
 			{
+				if(!opts.quiet)
+					terminal.writeLine('File loaded');
+
 				controller.player.play();
 				return websocket.emit('show-remote', true);
 			}
+
+			if(!opts.quiet)
+				terminal.writeLine('Restarting media player...');
 
 			controller.process.once('close', () => launchPlayer(true));
 
