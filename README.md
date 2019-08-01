@@ -6,7 +6,7 @@
 [![Donate](https://img.shields.io/badge/Donate-PayPal.Me-lightgrey.svg)](https://www.paypal.me/Rafostar)
 [![Twitter](https://img.shields.io/twitter/url/https/github.com/Rafostar/playercast.svg?style=social)](https://twitter.com/intent/tweet?text=Wow:&url=https%3A%2F%2Fgithub.com%2FRafostar%2Fplayercast)
 
-A simple app meant to be run in background. Automates the process of streaming files over the local network. Install it on device with any Linux DE to turn your media player into receiver that plays files cast with [Cast to TV](https://rafostar.github.io/gnome-shell-extension-cast-to-tv) from your host PC.
+A simple app meant to be run in background. Automates the process of receiving cast media over the local network. Install it on device with any Linux DE to turn your media player into receiver that plays files cast with [Cast to TV](https://rafostar.github.io/gnome-shell-extension-cast-to-tv) from your host PC.
 
 To receive media set `Playercast app` as your receiver type in Cast to TV settings.
 
@@ -17,7 +17,7 @@ To receive media set `Playercast app` as your receiver type in Cast to TV settin
 * Automatically starts media player upon cast
 * Can be installed on any Linux distro with any DE
 * Remotely control playback from GNOME top bar
-* Supports HDMI CEC
+* Supports HDMI-CEC
 * Safe to use (does not use `SSH` or `root` privileges)
 
 ## Installation
@@ -75,7 +75,7 @@ systemctl --user stop playercast
 playercast --remove-service
 ```
 
-## HDMI CEC
+## HDMI-CEC
 Requires CEC capable device (e.g. Raspberry Pi) and TV with such functionality.<br>
 Additionally `cec-client` must be installed. On *Raspbian* it is included in `cec-utils` package.
 

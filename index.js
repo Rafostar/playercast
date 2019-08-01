@@ -21,8 +21,8 @@ const opts = {
 const args = process.argv.slice(2);
 const argv = parseArgs(args, opts);
 
-if(argv['remove-service']) return service.remove();
-else if(argv._.length !== 1) return terminal.showHelp();
+if(argv._.length !== 1)
+	return terminal.showHelp();
 
 const data = String(argv._[0]).split(':');
 if(data.length > 2 || !checkArgvStrings())

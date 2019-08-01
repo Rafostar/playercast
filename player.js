@@ -1,8 +1,7 @@
+const fs = require('fs');
 const path = require('path');
 const PlayerController = require('media-player-controller');
-const CecController = require('cec-controller');
 const ioClient = require('socket.io-client');
-const fs = require('fs');
 const cecClient = require('./cec');
 const terminal = require('./terminal');
 
