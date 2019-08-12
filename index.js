@@ -30,7 +30,7 @@ if(data.length > 2 || !checkArgvStrings())
 
 const server = {
 	ip: data[0],
-	port: (data[1] || 4000)
+	port: (data[1] > 0) ? data[1] : 4000
 };
 
 const link = `http://${server.ip}:${server.port}`;
