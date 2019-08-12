@@ -4,6 +4,7 @@ const PlayerController = require('media-player-controller');
 const ioClient = require('socket.io-client');
 const cecClient = require('./cec');
 const terminal = require('./terminal');
+const keymap = require('./keymap');
 
 var websocket;
 var controller;
@@ -35,7 +36,7 @@ var player =
 
 			websocket.on('connect', () => onPlayerConnect());
 			websocket.on('disconnect', () => onPlayerDisconnect());
-			websocket.on('remote-signal', (msg) => onRemoteSignal(msg));
+			websocket.on('remote-signal', (msg) => keymap.gnomeRemote(msg, player));
 			websocket.on('playercast', (msg) => onPlayerCast(msg));
 			websocket.on('invalid', (msg) => onPlayerInvalid(msg));
 		}
@@ -47,10 +48,10 @@ var player =
 				process.stdout.write(' OK');
 
 				cec = client;
-				if(!opts['cec-alt-remote'])
-					cec.events.on('keypress', onCecKeyPress);
+				if(opts['cec-alt-remote'])
+					cec.events.on('keypress', (keyName) => keymap.cecRemoteAlt(keyName, player));
 				else
-					cec.events.on('keypress', onCecKeyPressAlt);
+					cec.events.on('keypress', (keyName) => keymap.cecRemote(keyName, player));
 			}
 			else
 			{
@@ -75,7 +76,7 @@ var player =
 		}
 	},
 
-	close: (err) =>
+	closePlayercast: (err) =>
 	{
 		if(!opts.quiet)
 			terminal.writeLine('Playercast closing...');
@@ -103,37 +104,88 @@ var player =
 		}
 	},
 
-	action: (fnc) =>
+	action: (fnc, value) =>
 	{
 		if(!controller || !isControlled) return;
 
-		controller.player[fnc]();
+		var onActionError = (err) =>
+		{
+			if(err) terminal.writeError(err.message, opts.quiet);
+		};
+
+		if(fnc === 'quit')
+			controller[fnc](onActionError);
+		else if(typeof value !== 'undefined')
+			controller.player[fnc](value, onActionError);
+		else
+			controller.player[fnc](onActionError);
 	},
 
-	increaseVolume: (volume) =>
+	setVolume: (volume) =>
 	{
-		volume = status.volume + volume;
+		if(!controller || !isControlled) return;
+
+		player.action('setVolume', volume * 100);
+	},
+
+	increaseVolume: (value) =>
+	{
+		if(!controller || !isControlled) return;
+
+		var volume = status.volume + value;
 		if(volume > 1) volume = 1;
 
-		onRemoteSignal({ action: 'VOLUME', value: volume });
+		player.setVolume(volume);
 	},
 
-	decreaseVolume: (volume) =>
+	decreaseVolume: (value) =>
 	{
-		volume = status.volume - volume;
+		if(!controller || !isControlled) return;
+
+		var volume = status.volume - value;
 		if(volume < 0) volume = 0;
 
-		onRemoteSignal({ action: 'VOLUME', value: volume });
+		player.setVolume(volume);
 	},
 
-	seekForward: (seekTime) =>
+	seekPercent: (value) =>
 	{
-		onRemoteSignal({ action: 'SEEK+', value: seekTime });
+		if(!controller || !isControlled) return;
+
+		var position = value * status.media.duration;
+		player.action('seek', position);
 	},
 
 	seekBackward: (seekTime) =>
 	{
-		onRemoteSignal({ action: 'SEEK-', value: seekTime });
+		if(!controller || !isControlled) return;
+
+		var position = status.currentTime - seekTime;
+		if(position < 0) position = 0;
+			player.action('seek', position);
+	},
+
+	seekForward: (seekTime) =>
+	{
+		if(!controller || !isControlled) return;
+
+		var position = status.currentTime + seekTime;
+		if(position < status.media.duration)
+			player.action('seek', position);
+	},
+
+	previousTrack: () =>
+	{
+		if(!controller || !isControlled) return;
+
+		websocket.emit('playercast-ctl', 'previous-track');
+	},
+
+	nextTrack: () =>
+	{
+		if(!controller || !isControlled) return;
+
+		websocket.emit('playercast-ctl', 'next-track');
 	}
 }
 
@@ -253,170 +305,6 @@ function onPlayerLaunch()
 	});
 
 	controller.process.once('error', (err) => terminal.writeError(err.message, opts.quiet));
-}
-
-function onRemoteSignal(msg)
-{
-	if(!controller || !isControlled) return;
-
-	var position;
-
-	switch(msg.action)
-	{
-		case 'PLAY':
-			controller.player.play((err) =>
-			{
-				if(err) terminal.writeError(err.message, opts.quiet);
-			});
-			break;
-		case 'PAUSE':
-			controller.player.pause((err) =>
-			{
-				if(err) terminal.writeError(err.message, opts.quiet);
-			});
-			break;
-		case 'SEEK':
-			position = msg.value * status.media.duration;
-			controller.player.seek(position, (err) =>
-			{
-				if(err) terminal.writeError(err.message, opts.quiet);
-			});
-			break;
-		case 'SEEK+':
-			position = status.currentTime + msg.value;
-			if(position < status.media.duration)
-			{
-				controller.player.seek(position, (err) =>
-				{
-					if(err) terminal.writeError(err.message, opts.quiet);
-				});
-			}
-			break;
-		case 'SEEK-':
-			position = status.currentTime - msg.value;
-			if(position < 0) position = 0;
-			controller.player.seek(position, (err) =>
-			{
-				if(err) terminal.writeError(err.message, opts.quiet);
-			});
-			break;
-		case 'VOLUME':
-			controller.player.setVolume(msg.value * 100, (err) =>
-			{
-				if(err) terminal.writeError(err.message, opts.quiet);
-			});
-			break;
-		case 'STOP':
-			controller.quit((err) =>
-			{
-				if(err) terminal.writeError(err.message, opts.quiet);
-			});
-			break;
-		default:
-			break;
-	}
-}
-
-function onCecKeyPress(keyName)
-{
-	if(!controller || !isControlled) return;
-
-	var value;
-	var seekTime = 10;
-
-	switch(keyName)
-	{
-		case 'select':
-			controller.player.cycleFullscreen();
-			break;
-		case 'up':
-			controller.player.cycleVideo();
-			break;
-		case 'down':
-			controller.player.cycleAudio();
-			break;
-		case 'left':
-			websocket.emit('playercast-ctl', 'previous-track');
-			break;
-		case 'right':
-			websocket.emit('playercast-ctl', 'next-track');
-			break;
-		case 'play':
-			onRemoteSignal({ action: 'PLAY' });
-			break;
-		case 'pause':
-			onRemoteSignal({ action: 'PAUSE' });
-			break;
-		case 'rewind':
-			onRemoteSignal({ action: 'SEEK-', value: seekTime });
-			break;
-		case 'fast-forward':
-			onRemoteSignal({ action: 'SEEK+', value: seekTime });
-			break;
-		case 'subtitle':
-			controller.player.cycleSubs();
-			break;
-		case 'exit':
-		case 'stop':
-			onRemoteSignal({ action: 'STOP' });
-			break;
-		default:
-			break;
-	}
-}
-
-function onCecKeyPressAlt(keyName)
-{
-	if(!controller || !isControlled) return;
-
-	var value;
-	var seekTime = 10;
-
-	switch(keyName)
-	{
-		case 'select':
-			controller.player.cyclePause();
-			break;
-		case 'up':
-			websocket.emit('playercast-ctl', 'next-track');
-			break;
-		case 'down':
-			websocket.emit('playercast-ctl', 'previous-track');
-			break;
-		case 'left':
-		case 'rewind':
-			onRemoteSignal({ action: 'SEEK-', value: seekTime });
-			break;
-		case 'right':
-		case 'fast-forward':
-			onRemoteSignal({ action: 'SEEK+', value: seekTime });
-			break;
-		case 'red':
-			controller.player.cycleVideo();
-			break;
-		case 'green':
-			controller.player.cycleAudio();
-			break;
-		case 'yellow':
-		case 'subtitle':
-			controller.player.cycleSubs();
-			break;
-		case 'blue':
-			controller.player.cycleFullscreen();
-			break;
-		case 'play':
-			onRemoteSignal({ action: 'PLAY' });
-			break;
-		case 'pause':
-			onRemoteSignal({ action: 'PAUSE' });
-			break;
-		case 'exit':
-		case 'stop':
-			onRemoteSignal({ action: 'STOP' });
-			break;
-		default:
-			break;
-	}
 }
 
 function onPlayerInvalid(msg)

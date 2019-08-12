@@ -6,9 +6,9 @@ const player = require('./player');
 const service = require('./service');
 const terminal = require('./terminal');
 
-process.on('SIGINT', () => player.close());
-process.on('SIGTERM', () => player.close());
-process.on('uncaughtException', (err) => player.close(err));
+process.on('SIGINT', () => player.closePlayercast());
+process.on('SIGTERM', () => player.closePlayercast());
+process.on('uncaughtException', (err) => player.closePlayercast(err));
 cliCursor.hide();
 
 const opts = {

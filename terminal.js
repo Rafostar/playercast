@@ -37,7 +37,7 @@ module.exports =
 					case '\u0003': // ctrl-c
 					case '\u0071': // q
 					case '\u001B': // Esc
-						player.close();
+						player.closePlayercast();
 						break;
 					case '\u0020': // Space
 						player.action('cyclePause');
