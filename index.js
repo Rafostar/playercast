@@ -30,8 +30,11 @@ if(data.length > 2 || !checkArgvStrings())
 
 const server = {
 	ip: data[0],
-	port: (data[1] > 0) ? data[1] : 4000
+	port: (data[1] || 4000)
 };
+
+if(isNaN(server.port) || server.port < 1 || server.port > 65535)
+	return terminal.showHelp();
 
 const link = `http://${server.ip}:${server.port}`;
 const playerOpts = {
