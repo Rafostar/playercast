@@ -86,11 +86,11 @@ sudo apt install cec-utils
 CEC functionality is automatically detected and enabled on app launch.<br>
 It can be disabled with `--disable-cec` option.
 
-**Raspberry Pi marks HDMI port as *active* during startup. Which means that TV source will not be switched automatically on first media cast after system boot.**
+**Raspberry Pi marks HDMI port as *active* during startup, which means that TV source will not be switched automatically on first media cast after system boot.**
 
 ### Switch HDMI after playback
 When playback is finished, HDMI port will be marked as *inactive*. This causes some TVs to switch input source to another one.
-If you want to always switch TV to one of available HDMI ports after playback use `--cec-end-hdmi` option followed by number of the HDMI port.
+If you want to always switch TV to one of available HDMI ports after playback use `--cec-end-hdmi` option followed by a number of the HDMI port.
 
 ### TV Remote buttons keymap
 Default keymap for controlling media player with TV remote.
