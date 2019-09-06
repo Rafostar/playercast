@@ -45,7 +45,8 @@ var player =
 		{
 			if(client)
 			{
-				process.stdout.write(' OK');
+				if(!opts.quiet)
+					process.stdout.write(' OK');
 
 				cec = client;
 				if(opts['cec-alt-remote'])
