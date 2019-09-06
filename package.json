@@ -30,7 +30,7 @@
   "dependencies": {
     "cec-controller": "^1.1.1",
     "cli-cursor": "^3.1.0",
-    "media-player-controller": "^0.4.0",
+    "media-player-controller": "^0.4.2",
     "minimist": "^1.2.0",
     "socket.io-client": "^2.2.0"
   }
