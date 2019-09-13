@@ -92,7 +92,7 @@ var player =
 
 		if(err)
 		{
-			terminal.writeError(err.message, opts.quiet);
+			console.error(err);
 			process.exit(1);
 		}
 		else
