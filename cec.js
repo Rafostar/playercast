@@ -5,7 +5,8 @@ module.exports = () =>
 {
 	return new Promise((resolve, reject) =>
 	{
-		var events = new CecController({ osdString: 'Playercast' });
+		const osdName = 'Playercast';
+		var events = new CecController({ osdString: osdName });
 
 		var onReady = (ctl) =>
 		{
@@ -14,7 +15,22 @@ module.exports = () =>
 				resolved = true;
 
 				if(ctl.hasOwnProperty('dev0'))
-					resolve({ events, ctl });
+				{
+					var hdmi = null;
+
+					for(var key in ctl)
+					{
+						if(typeof ctl[key] !== 'object') continue;
+						else if(ctl[key].osdString === osdName)
+						{
+							var port = ctl[key].address.split('.')[0];
+							hdmi = (isNaN(port)) ? null : port;
+							break;
+						}
+					}
+
+					resolve({ events, ctl, hdmi });
+				}
 				else
 					resolve(null);
 			}

@@ -12,7 +12,10 @@ process.on('uncaughtException', (err) => player.closePlayercast(err));
 cliCursor.hide();
 
 const opts = {
-	boolean: ['quiet', 'cec-alt-remote', 'disable-cec', 'create-service', 'remove-service'],
+	boolean: [
+		'quiet', 'cec-alt-remote', 'cec-force-switch', 'disable-cec',
+		'create-service', 'remove-service'
+	],
 	string: ['name', 'cec-end-hdmi'],
 	alias: { q: 'quiet', n: 'name' },
 	unknown: (option) => onUnknown(option)

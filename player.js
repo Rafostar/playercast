@@ -210,7 +210,12 @@ function onPlayerCast(msg)
 				terminal.writeLine('Sending HDMI CEC signals...');
 
 			await cec.ctl.dev0.turnOn();
-			cec.ctl.setActive();
+
+			cec.ctl.setActive().then(() =>
+			{
+				if(opts['cec-force-switch'] && cec.hdmi)
+					cec.ctl.dev0.changeSource(cec.hdmi);
+			});
 		}
 
 		controller.opts.playerArgs = getPlayerArgs(msg);
