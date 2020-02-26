@@ -25,7 +25,7 @@ To receive media set `Playercast app` as your receiver type in Cast to TV settin
 sudo npm install -g playercast
 ```
 Requires one of the supported media players to work.<br>
-Currently only MPV player is supported. VLC support is planned for the future.
+Currently MPV and VLC players are supported.
 
 ## Usage
 The application can be used from terminal with:
