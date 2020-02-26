@@ -8,41 +8,37 @@ module.exports = () =>
 		const osdName = 'Playercast';
 		var events = new CecController({ osdString: osdName });
 
-		var onReady = (ctl) =>
+		const onReady = (ctl) =>
 		{
-			if(!resolved)
+			if(resolved) return;
+
+			resolved = true;
+
+			if(!ctl.hasOwnProperty('dev0'))
+				return resolve(null);
+
+			var hdmi = null;
+
+			for(var key in ctl)
 			{
-				resolved = true;
-
-				if(ctl.hasOwnProperty('dev0'))
+				if(typeof ctl[key] !== 'object') continue;
+				else if(ctl[key].osdString === osdName)
 				{
-					var hdmi = null;
-
-					for(var key in ctl)
-					{
-						if(typeof ctl[key] !== 'object') continue;
-						else if(ctl[key].osdString === osdName)
-						{
-							var port = ctl[key].address.split('.')[0];
-							hdmi = (isNaN(port)) ? null : port;
-							break;
-						}
-					}
-
-					resolve({ events, ctl, hdmi });
+					var port = ctl[key].address.split('.')[0];
+					hdmi = (isNaN(port)) ? null : port;
+					break;
 				}
-				else
-					resolve(null);
 			}
+
+			resolve({ events, ctl, hdmi });
 		}
 
-		var onError = (err) =>
+		const onError = (err) =>
 		{
-			if(!resolved)
-			{
-				resolved = true;
-				resolve(null);
-			}
+			if(resolved) return;
+
+			resolved = true;
+			resolve(null);
 		}
 
 		events.on('ready', onReady);
