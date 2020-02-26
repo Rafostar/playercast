@@ -16,8 +16,8 @@ const opts = {
 		'quiet', 'cec-alt-remote', 'cec-force-switch', 'disable-cec',
 		'create-service', 'remove-service'
 	],
-	string: ['name', 'cec-end-hdmi'],
-	alias: { q: 'quiet', n: 'name' },
+	string: ['name', 'player', 'cec-end-hdmi'],
+	alias: { q: 'quiet', n: 'name', p: 'player' },
 	unknown: (option) => onUnknown(option)
 };
 
@@ -41,16 +41,17 @@ if(isNaN(server.port) || server.port < 1 || server.port > 65535)
 
 const link = `http://${server.ip}:${server.port}`;
 const playerOpts = {
+	player: 'mpv',
 	media: `${link}/cast`,
 	subtitles: `${link}/subs`,
 	cover: `${link}/cover`,
 	websocket: link,
-	player: 'mpv',
 	ipcPath: '/tmp/cast-socket'
 };
 
 var config = { ...playerOpts, ...argv };
 config.name = (config.name) ? config.name : makeRandomName();
+config.app = (config.player) ? config.player.toLowerCase() : playerOpts.player;
 
 if(argv['create-service']) service.create(server, argv);
 else if(argv['remove-service']) service.remove();
@@ -61,11 +62,10 @@ else {
 
 function onUnknown(option)
 {
-	if(option.includes('-'))
-	{
-		terminal.showHelp();
-		process.exit();
-	}
+	if(!option.includes('-')) return;
+
+	terminal.showHelp();
+	process.exit();
 }
 
 function checkArgvStrings()

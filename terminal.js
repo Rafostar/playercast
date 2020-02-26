@@ -109,10 +109,13 @@ module.exports =
 			`OPTIONS:`,
 			`  -q, --quiet                Do not print player status info except errors`,
 			`  -n, --name                 Name your receiver (default: "Playercast-XXXX")`,
+			`  -p, --player               Media player app to use (default: mpv)`,
+			``,
 			`  --cec-end-hdmi <number>    Switch TV to specified HDMI port after playback`,
 			`  --cec-force-switch         Force change of HDMI input on player start`,
 			`  --cec-alt-remote           Use alternative TV remote key mappings`,
 			`  --disable-cec              Do not use HDMI CEC functionality`,
+			``,
 			`  --create-service           Creates systemd service with used options`,
 			`  --remove-service           Removes playercast systemd service file`,
 			``

@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const PlayerController = require('media-player-controller');
 const ioClient = require('socket.io-client');
+const debug = require('debug')('playercast');
 const cecClient = require('./cec');
 const terminal = require('./terminal');
 const keymap = require('./keymap');
@@ -12,20 +13,24 @@ var cec;
 var opts;
 var isControlled = false;
 var isLive = false;
-
-var status = {
-	playerState: 'PAUSED',
-	currentTime: 0,
-	media: { duration: 0 },
-	volume: 0
-};
+var status;
 
 var player =
 {
-	listen: (config) =>
+	listen: function(config)
 	{
 		opts = config;
+
+		if(debug.enabled)
+			opts.quiet = true;
+
 		controller = new PlayerController(opts);
+
+		if(!controller._getSupportedPlayers().includes(opts.app))
+		{
+			terminal.writeError(`Unsupported media player: ${opts.app}`, opts.quiet);
+			return this.closePlayercast();
+		}
 
 		var createWebSocket = () =>
 		{
@@ -34,11 +39,11 @@ var player =
 			if(!opts.quiet)
 				terminal.writeLine(`Connecting to ${opts.websocket}...`);
 
-			websocket.on('connect', () => onPlayerConnect());
-			websocket.on('disconnect', () => onPlayerDisconnect());
-			websocket.on('remote-signal', (msg) => keymap.gnomeRemote(msg, player));
-			websocket.on('playercast', (msg) => onPlayerCast(msg));
-			websocket.on('invalid', (msg) => onPlayerInvalid(msg));
+			websocket.on('connect', onPlayerConnect);
+			websocket.on('disconnect', onPlayerDisconnect);
+			websocket.on('playercast', onPlayerCast);
+			websocket.on('invalid', onPlayerInvalid);
+			websocket.on('remote-signal', onRemoteSignal);
 		}
 
 		var onCecInit = (client) =>
@@ -50,9 +55,17 @@ var player =
 
 				cec = client;
 				if(opts['cec-alt-remote'])
-					cec.events.on('keypress', (keyName) => keymap.cecRemoteAlt(keyName, player));
+				{
+					cec.events.on('keypress', (keyName) =>
+						keymap.cecRemoteAlt(keyName, player)
+					);
+				}
 				else
-					cec.events.on('keypress', (keyName) => keymap.cecRemote(keyName, player));
+				{
+					cec.events.on('keypress', (keyName) =>
+						keymap.cecRemote(keyName, player)
+					);
+				}
 			}
 			else
 			{
@@ -77,125 +90,125 @@ var player =
 		}
 	},
 
-	closePlayercast: (err) =>
+	closePlayercast: function(err)
 	{
-		if(!opts.quiet)
-			terminal.writeLine('Playercast closing...');
-
-		if(controller && controller.process)
-			controller.quit();
-
-		if(isControlled && websocket)
-			websocket.emit('show-remote', false);
-
-		if(cec) cec.events.closeClient();
-
-		if(err)
+		const shutdown = () =>
 		{
-			console.error(err);
-			process.exit(1);
-		}
-		else
-		{
+			if(isControlled && websocket)
+				emitEvent('show-remote', false);
+
+			if(cec) cec.events.closeClient();
+
+			if(err)
+			{
+				console.error(err);
+				return process.exit(1);
+			}
+
 			if(!opts.quiet)
 				terminal.writeLine('Playercast closed');
 
 			process.stdout.write('\n');
 			process.exit(0);
 		}
+
+		if(!opts.quiet)
+			terminal.writeLine('Playercast closing...');
+
+		if(controller && controller.process)
+			controller.quit(() => shutdown());
+		else
+			shutdown();
 	},
 
-	action: (fnc, value) =>
+	action: function(fnc, value)
 	{
 		if(!controller || !isControlled) return;
 
-		var onActionError = (err) =>
+		const onActionError = (err) =>
 		{
 			if(err) terminal.writeError(err.message, opts.quiet);
-		};
+		}
 
-		if(fnc === 'quit')
-			controller[fnc](onActionError);
-		else if(typeof value !== 'undefined')
-			controller.player[fnc](value, onActionError);
+		if(typeof value !== 'undefined')
+			controller[fnc](value, onActionError);
 		else
-			controller.player[fnc](onActionError);
+			controller[fnc](onActionError);
 	},
 
-	setVolume: (volume) =>
+	setVolume: function(volume)
 	{
 		if(!controller || !isControlled) return;
 
-		player.action('setVolume', volume * 100);
+		if(volume > 1) volume = 1;
+		else if(volume < 0) volume = 0;
+
+		this.action('setVolume', volume);
 	},
 
-	increaseVolume: (value) =>
+	increaseVolume: function(value)
 	{
 		if(!controller || !isControlled) return;
 
 		var volume = status.volume + value;
-		if(volume > 1) volume = 1;
-
-		player.setVolume(volume);
+		this.setVolume(volume);
 	},
 
-	decreaseVolume: (value) =>
+	decreaseVolume: function(value)
 	{
 		if(!controller || !isControlled) return;
 
 		var volume = status.volume - value;
-		if(volume < 0) volume = 0;
-
-		player.setVolume(volume);
+		this.setVolume(volume);
 	},
 
-	seekPercent: (value) =>
+	seekPercent: function(value)
 	{
 		if(!controller || !isControlled) return;
 
 		var position = value * status.media.duration;
-		player.action('seek', position);
+		this.action('seek', position);
 	},
 
-	seekBackward: (seekTime) =>
+	seekBackward: function(seekTime)
 	{
 		if(!controller || !isControlled) return;
 
 		var position = status.currentTime - seekTime;
 		if(position < 0) position = 0;
-			player.action('seek', position);
+			this.action('seek', position);
 	},
 
-	seekForward: (seekTime) =>
+	seekForward: function(seekTime)
 	{
 		if(!controller || !isControlled) return;
 
 		var position = status.currentTime + seekTime;
 		if(position < status.media.duration)
-			player.action('seek', position);
+			this.action('seek', position);
 	},
 
-	previousTrack: () =>
+	previousTrack: function()
 	{
 		if(!controller || !isControlled) return;
 
-		websocket.emit('playercast-ctl', 'previous-track');
+		emitEvent('playercast-ctl', 'previous-track');
 	},
 
-	nextTrack: () =>
+	nextTrack: function()
 	{
 		if(!controller || !isControlled) return;
 
-		websocket.emit('playercast-ctl', 'next-track');
+		emitEvent('playercast-ctl', 'next-track');
 	}
 }
 
 function onPlayerCast(msg)
 {
-	if(opts.name === msg.name)
-		isControlled = true;
-	else
-		return isControlled = false;
+	isControlled = (opts.name === msg.name);
+
+	if(!isControlled)
+		return isControlled;
 
 	if(!controller)
 		return terminal.writeError('Controller not initialized!', opts.quiet);
@@ -218,42 +231,42 @@ function onPlayerCast(msg)
 			});
 		}
 
-		controller.opts.playerArgs = getPlayerArgs(msg);
+		controller.opts.args = getPlayerArgs(msg);
 
 		if(!opts.quiet)
-			terminal.writeLine(`Starting ${opts.player}...`);
+			terminal.writeLine(`Starting ${opts.app}...`);
 
-		controller.launch((err) =>
+		controller.launch(err =>
 		{
 			if(err) return terminal.writeError(err.message, opts.quiet);
-			onPlayerLaunch();
+			handlePlayerLaunch();
 		});
 	}
 
-	if(controller.process && controller.player)
+	if(controller.process && controller.connected)
 	{
 		if(!opts.quiet)
 			terminal.writeLine('Loading new media...');
 
 		setPlayerProperties(msg);
 
-		controller.player.load(opts.media, (err) =>
+		controller.load(opts.media, (err) =>
 		{
 			if(!err)
 			{
 				if(!opts.quiet)
 					terminal.writeLine('File loaded');
 
-				controller.player.play();
-				return websocket.emit('show-remote', true);
+				controller.play();
+				return emitEvent('show-remote', true);
 			}
 
 			if(!opts.quiet)
 				terminal.writeLine('Restarting media player...');
 
-			controller.process.once('close', () => launchPlayer(true));
+			controller.once('app-exit', () => launchPlayer(true));
 
-			controller.quit((err) =>
+			controller.quit(err =>
 			{
 				if(err) terminal.writeError(err.message, opts.quiet);
 			});
@@ -267,33 +280,60 @@ function onPlayerCast(msg)
 
 function onPlayerConnect()
 {
-	if(!opts.quiet) terminal.writeLine(`Connected to ${opts.websocket}`);
-	if(opts.name) websocket.emit('playercast-connect', opts.name);
+	if(!opts.quiet)
+		terminal.writeLine(`Connected to ${opts.websocket}`);
+
+	if(opts.name)
+		emitEvent('playercast-connect', opts.name);
 }
 
 function onPlayerDisconnect()
 {
 	isControlled = false;
-	if(!opts.quiet) terminal.writeLine('WebSocket disconnected');
+
+	if(!opts.quiet)
+		terminal.writeLine('WebSocket disconnected');
 }
 
-function onPlayerLaunch()
+function onPlayerInvalid(msg)
 {
-	controller.process.stdout.once('data', () =>
+	switch(msg)
 	{
-		if(controller.player.socket)
-			controller.player.socket.on('data', (data) => updateStatus(data));
+		case 'name':
+			terminal.writeError(
+				`Playercast name "${opts.name}" is already used on another device!`,
+				opts.quiet
+			);
+			process.exit(1);
+			break;
+		case false:
+			if(!opts.quiet)
+				terminal.writeLine(`${opts.name} waiting for media cast...`);
+			break;
+		default:
+			break;
+	}
+}
 
-		if(!opts.quiet)
-			terminal.writeLine('Player started');
+function onRemoteSignal(msg)
+{
+	keymap.gnomeRemote(msg, player);
+}
 
-		websocket.emit('show-remote', true);
-	});
+function handlePlayerLaunch()
+{
+	if(!opts.quiet)
+		terminal.writeLine('Player started');
 
-	controller.process.once('close', (code) =>
+	resetStatus();
+	controller.on('playback', updateStatus);
+	emitEvent('show-remote', true);
+
+	controller.once('app-exit', (code) =>
 	{
 		isControlled = false;
-		websocket.emit('show-remote', false);
+		controller.removeListener('playback', updateStatus);
+		emitEvent('show-remote', false);
 
 		if(cec)
 		{
@@ -306,85 +346,61 @@ function onPlayerLaunch()
 			});
 		}
 
-		if(code) terminal.writeError(`Player exited with status code: ${code}`, opts.quiet);
-		if(!opts.quiet) terminal.writeLine(`${opts.name} waiting for media cast...`);
-	});
+		if(code)
+			terminal.writeError(`Player exited with status code: ${code}`, opts.quiet);
 
-	controller.process.once('error', (err) => terminal.writeError(err.message, opts.quiet));
+		if(!opts.quiet)
+			terminal.writeLine(`${opts.name} waiting for media cast...`);
+	});
 }
 
-function onPlayerInvalid(msg)
+function updateStatus(event)
 {
-	switch(msg)
+	switch(event.name)
 	{
-		case 'name':
-			terminal.writeError(`Playercast name "${opts.name}" is already used on another device!`, opts.quiet);
-			process.exit(1);
+		case 'volume':
+			if(event.value > 1) event.value = 1;
+			status.volume = event.value;
+			if(!opts.quiet) terminal.writePlayerStatus(status, isLive);
 			break;
-		case false:
-			if(!opts.quiet) terminal.writeLine(`${opts.name} waiting for media cast...`);
+		case 'time-pos':
+			status.currentTime = event.value;
+			if(!opts.quiet) terminal.writePlayerStatus(status, isLive);
+			break;
+		case 'duration':
+			status.media.duration = event.value;
+			break;
+		case 'pause':
+			status.playerState = (event.value === true) ? 'PAUSED' : 'PLAYING';
+			if(!opts.quiet) terminal.writePlayerStatus(status, isLive);
+			break;
+		case 'eof-reached':
+			if(event.value === true)
+				emitEvent('playercast-ctl', 'track-ended');
 			break;
 		default:
+			terminal.writeError(`Unhandled event: ${event}`, opts.quiet);
 			break;
 	}
+
+	emitEvent('status-update', status);
 }
 
-function updateStatus(data)
+function resetStatus()
 {
-	const msgArray = data.split('\n');
-
-	for(var i = 0; i < msgArray.length - 1; i++)
-	{
-		var msg = JSON.parse(msgArray[i]);
-		if(msg.event === 'property-change')
-		{
-			switch(msg.name)
-			{
-				case 'volume':
-					var volume = msg.data / 100;
-					if(volume > 1) volume = 1;
-					status.volume = volume;
-					if(!opts.quiet) terminal.writePlayerStatus(status, isLive);
-					break;
-				case 'time-pos':
-					var floorCurr = Math.floor(status.currentTime);
-					var floorData = Math.floor(msg.data);
-					status.currentTime = msg.data;
-					if(Math.abs(floorCurr - floorData) >= 1)
-					{
-						if(!opts.quiet)
-							terminal.writePlayerStatus(status, isLive);
-
-						websocket.emit('status-update', status);
-					}
-					break;
-				case 'duration':
-					status.media.duration = msg.data;
-					break;
-				case 'pause':
-					status.playerState = (msg.data === true) ? 'PAUSED' : 'PLAYING';
-					if(!opts.quiet) terminal.writePlayerStatus(status, isLive);
-					break;
-				case 'eof-reached':
-					if(msg.data === true)
-						websocket.emit('playercast-ctl', 'track-ended');
-					break;
-				default:
-					terminal.writeError(`Unhandled property: ${msg}`, opts.quiet);
-					break;
-			}
-
-			if(msg.name !== 'time-pos')
-				websocket.emit('status-update', status);
-		}
-	}
+	status = {
+		playerState: 'PAUSED',
+		currentTime: 0,
+		media: { duration: 0 },
+		volume: 0
+	};
 }
 
 function getPlayerArgs(selection)
 {
 	var args = [''];
 
-	switch(opts.player)
+	switch(opts.app)
 	{
 		case 'mpv':
 			const mpvUniversal = ['--no-ytdl', '--fullscreen', '--volume-max=100',
@@ -402,8 +418,11 @@ function getPlayerArgs(selection)
 			else
 				args = [...mpvUniversal, ...mpvVideo];
 			break;
+		case 'vlc':
+		case 'cvlc':
+			args = ['--fullscreen'];
+			break;
 		default:
-			terminal.writeError(`Cannot get args for unsupported media player: ${opts.player}`, opts.quiet);
 			break;
 	}
 
@@ -412,40 +431,55 @@ function getPlayerArgs(selection)
 
 function setPlayerProperties(selection)
 {
-	switch(opts.player)
+	switch(opts.app)
 	{
 		case 'mpv':
-			controller.player.command(['set_property', 'force-media-title', getMediaTitle(selection)]);
+			controller.command([
+				'set_property', 'force-media-title', getMediaTitle(selection)
+			]);
 			if(selection.streamType === 'PICTURE')
 			{
-				controller.player.setRepeat(true);
-				controller.player.command(['set_property', 'osc', 'no']);
-				controller.player.command(['set_property', 'cache', 'auto']);
+				controller.setRepeat(true);
+				controller.command(['set_property', 'osc', 'no']);
+				controller.command(['set_property', 'cache', 'auto']);
 				break;
 			}
-			controller.player.setRepeat(false);
-			controller.player.command(['set_property', 'osc', 'yes']);
+			controller.setRepeat(false);
+			controller.command(['set_property', 'osc', 'yes']);
 			if(selection.addon === 'DESKTOP')
-				controller.player.command(['set_property', 'cache', 'no']);
+				controller.command(['set_property', 'cache', 'no']);
 			else
-				controller.player.command(['set_property', 'cache', 'auto']);
+				controller.command(['set_property', 'cache', 'auto']);
+			break;
+		case 'vlc':
+		case 'cvlc':
+			controller.setRepeat(false);
 			break;
 		default:
-			terminal.writeError(`Cannot set properties of unsupported media player: ${opts.player}`, opts.quiet);
 			break;
 	}
 }
 
 function getMediaTitle(selection)
 {
-	if(selection.title) return selection.title;
-	else
-	{
-		var title = path.parse(selection.filePath).name;
+	if(selection.title)
+		return selection.title;
 
-		if(title) return title;
-		else return "Playercast";
-	}
+	var title = path.parse(selection.filePath).name;
+
+	return (title) ? title : 'Playercast';
+}
+
+function emitEvent(name, value)
+{
+	websocket.emit(name, value);
+
+	if(!debug.enabled) return;
+
+	var val = (typeof value === 'object') ?
+		JSON.stringify(value) : value;
+
+	debug(`Emited: ${name}, value: ${val}`);
 }
 
 module.exports = player;
