@@ -4,6 +4,7 @@
   "description": "Turn your media player into receiver for GNOME Shell Extension Cast to TV",
   "main": "index.js",
   "files": [
+    "lib/",
     "*.js"
   ],
   "bin": {
@@ -25,16 +26,26 @@
     "player"
   ],
   "author": "Rafostar",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "bugs": {
     "url": "https://github.com/Rafostar/playercast/issues"
   },
   "homepage": "https://rafostar.github.io/playercast",
   "dependencies": {
+    "body-parser": "^1.19.0",
     "cec-controller": "^1.3.0",
     "cli-cursor": "^3.1.0",
+    "express": "^4.17.1",
+    "internal-ip": "^5.0.0",
     "media-player-controller": "^1.1.0",
     "minimist": "^1.2.0",
+    "multicast-dns": "^7.2.1",
+    "multicast-scanner": "^2.2.2",
+    "socket.io": "^2.3.0",
     "socket.io-client": "^2.2.0"
+  },
+  "devDependencies": {
+    "bufferutil": "^4.0.1",
+    "utf-8-validate": "^5.0.2"
   }
 }
