@@ -17,7 +17,7 @@ const opts = {
 		'quiet', 'cec-alt-remote', 'cec-force-switch', 'disable-cec',
 		'listen', 'create-service', 'remove-service'
 	],
-	string: ['subs', 'name', 'player', 'cec-end-hdmi'],
+	string: ['subs', 'name', 'player', 'port', 'cec-end-hdmi'],
 	alias: { q: 'quiet', s: 'subs', n: 'name', p: 'player' },
 	default: { p: 'mpv' },
 	unknown: (option) => onUnknown(option)
@@ -29,6 +29,9 @@ init();
 
 function init()
 {
+	if(!checkArgvStrings())
+		return terminal.showHelp();
+
 	if(!argv.listen)
 	{
 		if(!argv._.length)
@@ -69,7 +72,7 @@ function connectClient()
 	if(argv._.length === 1)
 	{
 		const data = String(argv._[0]).split(':');
-		if(data.length > 2 || !checkArgvStrings())
+		if(data.length > 2)
 			return terminal.showHelp();
 
 		const source = {
@@ -104,7 +107,7 @@ function connectClient()
 	if(playerOpts.connectWs)
 		return player.init(config);
 
-	server.receiver(9881, (err) =>
+	server.receiver(config.port || 9881, (err) =>
 	{
 		if(err)
 		{
@@ -132,7 +135,16 @@ function onUnknown(option)
 
 function checkArgvStrings()
 {
-	if(argv['cec-end-hdmi'] && isNaN(argv['cec-end-hdmi']))
+	if(
+		argv.hasOwnProperty('cec-end-hdmi')
+		&& (isNaN(argv['cec-end-hdmi']) || argv['cec-end-hdmi'] < 0)
+	)
+		return false;
+
+	if(
+		argv.hasOwnProperty('port')
+		&& (isNaN(argv.port) || argv.port < 1 || argv.port > 65535)
+	)
 		return false;
 
 	for(var key of opts.string)

@@ -40,7 +40,7 @@
     "media-player-controller": "^1.1.0",
     "minimist": "^1.2.0",
     "multicast-dns": "^7.2.1",
-    "multicast-scanner": "^2.2.2",
+    "multicast-scanner": "^2.2.3",
     "socket.io": "^2.3.0",
     "socket.io-client": "^2.2.0"
   },
