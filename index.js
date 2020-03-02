@@ -41,7 +41,8 @@ function init()
 		process.on('SIGTERM', () => sender.closeSender());
 		process.on('uncaughtException', (err) => sender.closeSender(err));
 
-		terminal.quiet = debug.enabled;
+		terminal.quiet = (argv.quiet || debug.enabled);
+		terminal.mode = 'Sender';
 		return sender.init(argv);
 	}
 
@@ -98,9 +99,10 @@ function connectClient()
 	if(!config.name)
 		config.name = 'Playercast-' + helper.makeRandomString(4, true);
 
+	terminal.device = config.name;
 	config.app = (config.player) ? config.player.toLowerCase() : playerOpts.player;
 
-	terminal.quiet = debug.enabled;
+	terminal.quiet = (argv.quiet || debug.enabled);
 	terminal.disableWriting();
 	terminal.enableKeyInput(player);
 
