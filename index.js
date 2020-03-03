@@ -43,7 +43,7 @@ function init()
 
 		terminal.quiet = (argv.quiet || debug.enabled);
 		terminal.mode = 'Sender';
-		helper.playlist = argv._;
+		helper.loadPlaylist(argv._);
 
 		return sender.init(argv);
 	}
