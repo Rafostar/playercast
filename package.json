@@ -4,14 +4,19 @@
   "description": "Turn your media player into receiver for GNOME Shell Extension Cast to TV",
   "main": "index.js",
   "files": [
-    "lib/",
-    "*.js"
+    "index.js",
+    "lib/"
   ],
   "bin": {
     "playercast": "./index.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "pkg": {
+    "assets": [
+      "images/"
+    ]
   },
   "repository": {
     "type": "git",
