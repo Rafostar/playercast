@@ -1,14 +1,14 @@
 {
   "name": "playercast",
   "version": "1.2.0",
-  "description": "Turn your media player into receiver for GNOME Shell Extension Cast to TV",
-  "main": "index.js",
+  "description": "Cast to media player and control playback remotely",
+  "main": "lib/index.js",
   "files": [
-    "index.js",
+    "app.js",
     "lib/"
   ],
   "bin": {
-    "playercast": "./index.js"
+    "playercast": "./app.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
