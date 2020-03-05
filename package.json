@@ -5,7 +5,8 @@
   "main": "lib/index.js",
   "files": [
     "app.js",
-    "lib/"
+    "lib/",
+    "images/"
   ],
   "bin": {
     "playercast": "./app.js"
