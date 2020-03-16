@@ -12,7 +12,7 @@ const opts = {
 		'quiet', 'cec-alt-remote', 'cec-force-switch', 'disable-cec',
 		'listen', 'create-service', 'remove-service'
 	],
-	string: ['subs', 'name', 'player', 'port', 'cec-end-hdmi'],
+	string: ['subs', 'name', 'player', 'cwd', 'port', 'cec-end-hdmi'],
 	alias: { q: 'quiet', s: 'subs', n: 'name', p: 'player' },
 	default: { p: (process.platform === 'win32') ? 'vlc' : 'mpv' },
 	unknown: (option) => onUnknown(option)
