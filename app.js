@@ -10,7 +10,7 @@ cliCursor.hide();
 const opts = {
 	boolean: [
 		'quiet', 'cec-alt-remote', 'cec-force-switch', 'disable-cec',
-		'listen', 'create-service', 'remove-service'
+		'create-service', 'remove-service'
 	],
 	string: ['subs', 'name', 'player', 'cwd', 'port', 'cec-end-hdmi'],
 	alias: { q: 'quiet', s: 'subs', n: 'name', p: 'player' },
@@ -19,13 +19,15 @@ const opts = {
 };
 
 const args = process.argv.slice(2);
-const argv = parseArgs(args, opts);
+var argv = parseArgs(args, opts);
 init();
 
 function init()
 {
 	if(!checkArgvStrings())
 		return terminal.showHelp();
+
+	argv.listen = getIsReceiverMode();
 
 	const app = playercast(argv);
 }
@@ -54,6 +56,30 @@ function checkArgvStrings()
 
 	for(var key of opts.string)
 		if(argv[key] === '') return false;
+
+	return true;
+}
+
+function getIsReceiverMode()
+{
+	if(!argv._.length)
+		return true;
+	else if(argv._.length > 1)
+		return false;
+
+	const ip = argv._[0].split(':')[0].split('.');
+
+	if(ip.length === 1 && ip[0] === 'localhost')
+		return true;
+
+	if(ip.length !== 4)
+		return false;
+
+	for(var addr of ip)
+	{
+		if(isNaN(addr))
+			return false;
+	}
 
 	return true;
 }
