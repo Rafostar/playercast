@@ -10,10 +10,10 @@ cliCursor.hide();
 const opts = {
 	boolean: [
 		'quiet', 'cec-alt-remote', 'cec-force-switch', 'disable-cec',
-		'create-service', 'remove-service'
+		'attach', 'create-service', 'remove-service'
 	],
 	string: ['subs', 'name', 'player', 'cwd', 'port', 'cec-end-hdmi'],
-	alias: { q: 'quiet', s: 'subs', n: 'name', p: 'player' },
+	alias: { q: 'quiet', a: 'attach', s: 'subs', n: 'name', p: 'player' },
 	default: { p: (process.platform === 'win32') ? 'vlc' : 'mpv' },
 	unknown: (option) => onUnknown(option)
 };
