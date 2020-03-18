@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const fs = require('fs');
 const cliCursor = require('cli-cursor');
 const parseArgs = require('minimist');
 const playercast = require('./lib/index');
@@ -18,6 +19,10 @@ const opts = {
 	unknown: (option) => onUnknown(option)
 };
 
+const WIN_DIRS = {
+	vlc: 'C:\\Program Files\\VideoLAN\\VLC'
+}
+
 const args = process.argv.slice(2);
 var argv = parseArgs(args, opts);
 init();
@@ -28,6 +33,16 @@ function init()
 		return terminal.showHelp();
 
 	argv.listen = getIsReceiverMode();
+
+	if(
+		argv.listen
+		&& !argv.cwd
+		&& process.platform === 'win32'
+		&& WIN_DIRS[argv.player]
+		&& fs.existsSync(WIN_DIRS[argv.player])
+	) {
+		argv.cwd = WIN_DIRS[argv.player];
+	}
 
 	const app = playercast(argv);
 }
