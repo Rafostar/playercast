@@ -11,7 +11,7 @@ cliCursor.hide();
 const opts = {
 	boolean: [
 		'quiet', 'cec-alt-remote', 'cec-force-switch', 'disable-cec',
-		'attach', 'create-service', 'remove-service'
+		'attach', 'create-service', 'remove-service', 'help'
 	],
 	string: ['subs', 'name', 'player', 'cwd', 'port', 'cec-end-hdmi'],
 	alias: { q: 'quiet', a: 'attach', s: 'subs', n: 'name', p: 'player' },
@@ -21,7 +21,7 @@ const opts = {
 
 const WIN_DIRS = {
 	vlc: 'C:\\Program Files\\VideoLAN\\VLC'
-}
+};
 
 const args = process.argv.slice(2);
 var argv = parseArgs(args, opts);
@@ -29,7 +29,7 @@ init();
 
 function init()
 {
-	if(!checkArgvStrings())
+	if(argv.help || !checkArgvStrings())
 		return terminal.showHelp();
 
 	argv.listen = getIsReceiverMode();
