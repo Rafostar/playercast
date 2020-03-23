@@ -11,7 +11,7 @@ cliCursor.hide();
 const opts = {
 	boolean: [
 		'quiet', 'cec-alt-remote', 'cec-force-switch', 'disable-cec',
-		'attach', 'create-service', 'remove-service', 'help'
+		'attach', 'create-service', 'remove-service', 'disable-scan', 'help'
 	],
 	string: ['subs', 'name', 'player', 'cwd', 'port', 'cec-end-hdmi'],
 	alias: { q: 'quiet', a: 'attach', s: 'subs', n: 'name', p: 'player' },
