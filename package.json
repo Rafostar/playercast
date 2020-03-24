@@ -44,7 +44,7 @@
     "express": "^4.17.1",
     "ffmpeg-extract": "^1.0.1",
     "internal-ip": "^5.0.0",
-    "media-player-controller": "^1.4.1",
+    "media-player-controller": "^1.4.2",
     "mime-types": "^2.1.26",
     "minimist": "^1.2.5",
     "multicast-dns": "^7.2.1",
