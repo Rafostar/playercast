@@ -13,7 +13,7 @@ const opts = {
 		'quiet', 'cec-alt-remote', 'cec-force-switch', 'disable-cec',
 		'attach', 'create-service', 'remove-service', 'disable-scan', 'help'
 	],
-	string: ['subs', 'name', 'player', 'cwd', 'port', 'cec-end-hdmi'],
+	string: ['subs', 'name', 'player', 'player-args', 'cwd', 'port', 'cec-end-hdmi'],
 	alias: { q: 'quiet', a: 'attach', s: 'subs', n: 'name', p: 'player' },
 	default: { p: (process.platform === 'win32') ? 'vlc' : 'mpv' },
 	unknown: (option) => onUnknown(option)
@@ -72,6 +72,8 @@ function checkArgvStrings()
 	for(var key of opts.string)
 		if(argv[key] === '') return false;
 
+	if(!argv.hasOwnProperty('player-args'))
+		argv['player-args'] = ''
 	return true;
 }
 
